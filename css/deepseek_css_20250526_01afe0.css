@@ -1,0 +1,13 @@
+/* style.css */
+:root {
+    --primary: #E10600;
+    --secondary: #003366;
+    --accent: #FFD700;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+}
+/* ... (pega aquí todo el CSS del código anterior) ... */
