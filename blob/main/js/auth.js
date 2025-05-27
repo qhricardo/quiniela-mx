@@ -1,47 +1,71 @@
-// Lógica de quinielas + resultados
-const partidos = [
-    { id: 1, local: "América", visitante: "Chivas", resultado: "2-1" },
-    // ... agregar los 10 partidos
-];
+// Base de datos simulada
+const usuarios = JSON.parse(localStorage.getItem('quinielaUsers')) || [];
 
-// Guardar en localStorage
-function guardarPronosticos(pronosticos) {
-    localStorage.setItem('pronosticosJ15', JSON.stringify(pronosticos));
-}
+// Registro
+document.getElementById('registerForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const nombre = this.elements[0].value;
+    const email = this.elements[1].value;
+    const password = this.elements[2].value;
 
-// Cargar resultados
-function cargarResultados() {
-    const pronosticos = JSON.parse(localStorage.getItem('pronosticosJ15')) || [];
-    
-    let puntos = 0;
-    const tabla = document.querySelector('.resultados-table');
-    
-    partidos.forEach(partido => {
-        const pronostico = pronosticos.find(p => p.id === partido.id);
-        const fila = document.createElement('tr');
-        
-        if (pronostico) {
-            const acierto = pronostico.pronostico === "G" && partido.resultado.startsWith(partido.local);
-            // ... lógica de puntuación
-            
-            fila.innerHTML = `
-                <td>${partido.local} vs ${partido.visitante}</td>
-                <td>${partido.resultado}</td>
-                <td>${pronostico.pronostico}</td>
-                <td>${acierto ? '3' : '0'} pts</td>
-            `;
-            
-            fila.classList.add(acierto ? 'acierto' : 'error');
-            puntos += acierto ? 3 : 0;
-        }
-        
-        tabla.appendChild(fila);
+    if (usuarios.some(u => u.email === email)) {
+        alert("⚠️ Este correo ya está registrado");
+        return;
+    }
+
+    usuarios.push({
+        nombre,
+        email,
+        password: btoa(password) // Encriptación básica
     });
-    
-    document.getElementById('puntosTotales').textContent = puntos;
-}
 
-// Inicializar
-if (document.querySelector('.resultados-table')) {
-    cargarResultados();
-}
+    localStorage.setItem('quinielaUsers', JSON.stringify(usuarios));
+    alert("✅ ¡Registro exitoso!");
+    window.location.href = "login.html";
+});
+
+// Login
+document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = this.elements[0].value;
+    const password = btoa(this.elements[1].value);
+
+    const usuario = usuarios.find(u => 
+        u.email === email && 
+        u.password === password
+    );
+
+    if (usuario) {
+        localStorage.setItem('usuarioLogueado', JSON.stringify({
+            nombre: usuario.nombre,
+            email
+        }));
+        window.location.href = "index.html";
+    } else {
+        document.getElementById('errorMsg').textContent = "Credenciales incorrectas";
+    }
+    // Datos de usuario de prueba
+const USUARIO_VALIDO = {
+  email: "test@quiniela.com",
+  password: "MX2024!" // Contraseña encriptada: "TVgyMDI0IQ=="
+};
+
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  
+  const email = this.elements[0].value;
+  const password = this.elements[1].value;
+
+  if (email === USUARIO_VALIDO.email && password === USUARIO_VALIDO.password) {
+    // 1. Guarda sesión
+    localStorage.setItem("sesionActiva", "true");
+    
+    // 2. Redirige al index
+    window.location.href = "index.html";
+  } else {
+    alert("❌ Credenciales incorrectas. Usa:\nEmail: test@quiniela.com\nContraseña: MX2024!");
+  }
+});
+});
