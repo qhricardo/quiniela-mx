@@ -7,7 +7,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
   try {
     await firebase.auth().signInWithEmailAndPassword(email, password);
-    window.location.href = "inicio.html";
+    window.location.href = "index.html";
   } catch (error) {
     messageDiv.textContent = traducirError(error.code);
     messageDiv.style.display = 'block';
