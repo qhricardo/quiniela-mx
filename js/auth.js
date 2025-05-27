@@ -1,3 +1,22 @@
+const auth = firebase.auth();
+
+document.getElementById('login-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      window.location.href = "inicio.html";
+    })
+    .catch((error) => {
+      console.error("Error de autenticación:", error);
+      document.getElementById('form-message').textContent = 
+        error.message.includes("password") ? 
+        "Contraseña incorrecta" : "Usuario no encontrado";
+    });
+});
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const registerLink = document.getElementById('register-link');
