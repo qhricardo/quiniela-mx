@@ -1,13 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Página Principal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | Quiniela MX</title>
 </head>
 <body>
-  <h1>¡Bienvenido!</h1>
-  <button onclick="firebase.auth().signOut()">Cerrar sesión</button>
-  
-  <script src="js/firebase-config.js"></script>
-  <script src="js/auth-check.js"></script>
+    <h1>Bienvenido a Quiniela MX</h1>
+    <button id="logout-btn">Cerrar sesión</button>
+
+    <!-- Firebase y protección de rutas -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-check.js"></script>
+    
+    <script>
+        // Cerrar sesión
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
 </body>
 </html>
