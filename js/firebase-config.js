@@ -10,7 +10,7 @@ const firebaseConfig = {
 
 // Inicializa Firebase
 if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(firebaseConfig);
 }
 
 // Referencia al servicio de autenticación
