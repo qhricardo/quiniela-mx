@@ -1,0 +1,49 @@
+/* NUEVOS ESTILOS AÑADIDOS */
+
+/* Login */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+/* Header */
+header {
+    background: var(--secondary);
+    padding: 15px 0;
+    color: white;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Resultados */
+.resultados-table {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.resultados-table th {
+    background: var(--secondary);
+    color: white;
+}
+
+.resumen {
+    text-align: right;
+    margin-top: 30px;
+    font-size: 1.2em;
+}
+
+.acierto {
+    background: #d4edda !important;
+}
+
+.error {
+    background: #f8d7da !important;
+}
