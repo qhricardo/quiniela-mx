@@ -5,7 +5,7 @@ const firebaseConfig = {
     projectId: "quiniela-mx-9ef52",
     storageBucket: "quiniela-mx-9ef52.appspot.com",
     messagingSenderId: "290980633372",
-    appId: "1:1234567890:web:abcd1234..."
+    appId: "1:290980633372:web:abcd1234..."
 };
 
 // Inicializa Firebase
