@@ -1,55 +1,49 @@
-/* ESTILOS GENERALES */
-:root {
-    --primary: #E10600; /* Rojo Liga MX */
-    --secondary: #003366; /* Azul oscuro */
-    --accent: #FFD700; /* Dorado */
-}
+/* NUEVOS ESTILOS AÑADIDOS */
 
-body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f8f9fa;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* ESTILOS DE TABLA */
-.quiniela-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+/* Login */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
     background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
 
-.quiniela-table th {
+/* Header */
+header {
+    background: var(--secondary);
+    padding: 15px 0;
+    color: white;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Resultados */
+.resultados-table {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.resultados-table th {
     background: var(--secondary);
     color: white;
-    padding: 12px;
-    text-align: left;
 }
 
-/* ESTILOS DE BOTONES */
-.pronostico-btn {
-    padding: 8px 12px;
-    border: 2px solid #ddd;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s;
+.resumen {
+    text-align: right;
+    margin-top: 30px;
+    font-size: 1.2em;
 }
 
-.ganar { color: #2ecc71; }
-.empatar { color: #f39c12; }
-.perder { color: #e74c3c; }
+.acierto {
+    background: #d4edda !important;
+}
 
-.pronostico-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
+.error {
+    background: #f8d7da !important;
 }
