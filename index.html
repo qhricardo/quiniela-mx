@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+    <script>
+    // Verificación al cargar
+    if (!sessionStorage.getItem("authToken")) {
+        window.location.href = "https://qhricardo.github.io/quiniela-mx/login.html";
+    }
+</script>
 <script>
     if (!sessionStorage.getItem("isAuthenticated")) {
         window.location.href = "login.html";
