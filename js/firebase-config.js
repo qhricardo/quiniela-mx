@@ -7,7 +7,12 @@ const firebaseConfig = {
   messagingSenderId: "290980633372",         // Ej: "1234567890"
   appId: "1:290980633372:web:c4b32a64e8e7d2ca6978d9D"                        // Ej: "1:1234567890:web:abcd1234..."
 };
-
+firebase.auth().onAuthStateChanged((user) => {
+  const currentPage = window.location.pathname.split('/').pop();
+  if (!user && currentPage !== 'login.html') {
+    window.location.href = 'login.html';
+  }
+});
 // Inicialización segura
 if (typeof firebase !== 'undefined') {
   if (!firebase.apps.length) {
