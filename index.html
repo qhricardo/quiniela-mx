@@ -1,78 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
-    <script>
-    // Verificación al cargar
-    if (!sessionStorage.getItem("authToken")) {
-        window.location.href = "https://qhricardo.github.io/quiniela-mx/login.html";
-    }
-</script>
-<script>
-    if (!sessionStorage.getItem("isAuthenticated")) {
-        window.location.href = "login.html";
-    }
-</script>
-    <script>
-    // Verificación de sesión (al inicio del <body>)
-    if (!sessionStorage.getItem("authToken")) {
-        window.location.replace("https://qhricardo.github.io/quiniela-mx/login.html");
-    }
-</script>
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiniela MX | Jornada 15</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script>
-        // Verificar sesión al cargar
-        if (!localStorage.getItem('usuarioLogueado')) {
-            window.location.href = "login.html";
-        }
-    </script>
+<html>
+<head>
+  <title>Página Principal</title>
 </head>
 <body>
-    <script>
-    // Verifica si hay sesión activa
-    if (!localStorage.getItem("sesionActiva")) {
-      window.location.href = "login.html"; // Redirige al login
-    }
-  </script>
-    <header>
-        <div class="logo">QuinielaMX</div>
-        <div class="user-panel">
-            <span id="usernameDisplay"></span>
-            <button id="logoutBtn" class="btn-logout">Salir</button>
-        </div>
-    </header>
-
-    <!-- Contenido de tu quiniela -->
-    <main class="container">
-        <h1>Jornada 15 - Apertura 2024</h1>
-        <!-- Tabla de partidos... -->
-    </main>
-
-    <script src="js/auth.js"></script>
-    <script src="js/quiniela.js"></script>
-    <script src="js/firebase-config.js"></script>
-<script src="js/auth-check.js"></script>
-    <script>
-        // Mostrar usuario y manejar logout
-        const usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
-        if (usuario) {
-            document.getElementById('usernameDisplay').textContent = usuario.nombre;
-        }
-        <button id="logout-btn" class="btn-logout">Cerrar sesión</button>
-
-<script>
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        firebase.auth().signOut()
-            .then(() => window.location.href = 'login.html');
-    });
-</script>
-        
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('usuarioLogueado');
-            window.location.href = "login.html";
-        });
-    </script>
+  <h1>¡Bienvenido!</h1>
+  <button onclick="firebase.auth().signOut()">Cerrar sesión</button>
+  
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-check.js"></script>
 </body>
 </html>
