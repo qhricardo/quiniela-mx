@@ -1,32 +1,16 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Login - Quiniela MX</title>
+    <!-- Ruta CORRECTA -->
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <div class="auth-container">
-        <h1>🔐 Iniciar Sesión</h1>
-        <form id="loginForm">
-            <input type="email" placeholder="Correo" required>
-            <input type="password" placeholder="Contraseña" required>
-            <button type="submit" class="btn">Ingresar</button>
-        </form>
-        <p class="auth-footer">¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
-        <div id="errorMsg" class="error-message"></div>
-    </div>
-<script>
-document.getElementById("loginForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    localStorage.setItem("sesionActiva", "true");
-    window.location.href = "index.html"; 
-});
-    <form id="loginForm"> <!-- ¡Este ID debe coincidir! -->
-  <!-- ... tus inputs ... -->
-</form>
-<script src="./js/auth.js"></script> <!-- Ruta correcta -->
-</script>
+    <form id="loginForm">
+        <input type="email" placeholder="test@example.com">
+        <input type="password" placeholder="MX2024!">
+        <button>Ingresar</button>
+    </form>
+    <!-- Ruta CORRECTA -->
     <script src="./js/auth.js"></script>
 </body>
 </html>
