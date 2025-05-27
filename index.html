@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiniela MX | Pronósticos</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Quiniela MX - Jornada 15</h1>
+        
+        <!-- Tabla de partidos -->
+        <table class="quiniela-table">
+            <thead>
+                <tr>
+                    <th>Local</th>
+                    <th></th>
+                    <th>Visitante</th>
+                    <th>Pronóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Partido 1 -->
+                <tr>
+                    <td class="equipo-local">América</td>
+                    <td class="vs">vs</td>
+                    <td class="equipo-visitante">Chivas</td>
+                    <td>
+                        <div class="pronostico">
+                            <button class="pronostico-btn ganar" data-resultado="1">G</button>
+                            <button class="pronostico-btn empatar" data-resultado="X">E</button>
+                            <button class="pronostico-btn perder" data-resultado="2">P</button>
+                        </div>
+                    </td>
+                </tr>
+                
+                <!-- Partido 2 -->
+                <tr>
+                    <td class="equipo-local">Cruz Azul</td>
+                    <td class="vs">vs</td>
+                    <td class="equipo-visitante">Pumas</td>
+                    <td>
+                        <div class="pronostico">
+                            <button class="pronostico-btn ganar" data-resultado="1">G</button>
+                            <button class="pronostico-btn empatar" data-resultado="X">E</button>
+                            <button class="pronostico-btn perder" data-resultado="2">P</button>
+                        </div>
+                    </td>
+                </tr>
+                
+                <!-- Agrega más partidos según necesites -->
+            </tbody>
+        </table>
+        
+        <div class="acciones">
+            <button class="btn btn-guardar" id="guardar">Guardar Quiniela</button>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
