@@ -1,24 +1,21 @@
-// Configuración de Firebase (REEMPLAZA CON TUS DATOS)
+// Configuración de Firebase (¡Reemplaza con tus datos!)
 const firebaseConfig = {
-  apiKey: "AIzaSyAAtOcJznIwyH0ZMXXiR4WSGWMC6UcnVqE",
-  authDomain: "quiniela-mx-9ef52.firebaseapp.com",
-  projectId: "quiniela-mx-9ef52",
-  storageBucket: "quiniela-mx-9ef52.firebasestorage.app",
-  messagingSenderId: "290980633372",
-  appId: "1:290980633372:web:c4b32a64e8e7d2ca6978d9"
+  apiKey: "AIzaSyAAtOcJznIwyH0ZMXXiR4WSGWMC6UcnVqE",                 // Ej: "AIzaSyD123..."
+  authDomain: "quiniela-mx-9ef52.firebaseapp.com", // Ej: "quiniela-mx-12345.firebaseapp.com"
+  projectId: "quiniela-mx-9ef52",               // Ej: "quiniela-mx-12345"
+  storageBucket: "quiniela-mx-9ef52.firebasestorage.app",  // Ej: "quiniela-mx-12345.appspot.com"
+  messagingSenderId: "290980633372",         // Ej: "1234567890"
+  appId: "1:290980633372:web:c4b32a64e8e7d2ca6978d9D"                        // Ej: "1:1234567890:web:abcd1234..."
 };
 
 // Inicialización segura
 if (typeof firebase !== 'undefined') {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-  } else {
-    firebase.app(); // Usa la app ya inicializada
   }
 } else {
-  console.error("Firebase SDK no está cargado");
+  console.error("Error: Firebase SDK no cargado");
 }
 
-// Exporta para uso en otros archivos
+// Exporta el módulo de autenticación
 const auth = firebase.auth();
-export { auth };  // Elimina esta línea si no usas módulos ES6
