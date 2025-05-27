@@ -2,6 +2,19 @@
 const usuariosRegistrados = [
     { email: "usuario@example.com", password: "Quiniela123", nombre: "Apostador MX" }
 ];
+// Base de datos en localStorage
+const DB_KEY = "quinielaUsers";
+
+function getUsers() {
+    return JSON.parse(localStorage.getItem(DB_KEY)) || [];
+}
+
+function saveUser(user) {
+    const users = getUsers();
+    users.push(user);
+    localStorage.setItem(DB_KEY, JSON.stringify(users));
+}
+
 
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -38,20 +51,60 @@ const usuarioData = {
 };
 localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioData));
 
-// Opcional: Registro básico
-document.getElementById('registerLink')?.addEventListener('click', function(e) {
+// Registro mejorado
+document.getElementById('registerForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const email = prompt("Ingresa tu correo electrónico:");
-    const password = prompt("Crea una contraseña segura:");
     
-    if (email && password) {
-        usuariosRegistrados.push({
-            email,
-            password,
-            nombre: email.split('@')[0]
-        });
-        alert("✅ Registro exitoso. Ahora puedes iniciar sesión.");
+    const email = this.elements[1].value;
+    const password = this.elements[2].value;
+
+    // Validar contraseña
+    if (!/(?=.*[A-Z])(?=.*\d).{8,}/.test(password)) {
+        alert("La contraseña necesita 8+ caracteres, 1 mayúscula y 1 número");
+        return;
     }
+
+    // Verificar si el usuario existe
+    if (getUsers().some(u => u.email === email)) {
+        alert("⚠️ Este correo ya está registrado");
+        return;
+    }
+
+    // Guardar usuario
+    saveUser({
+        nombre: this.elements[0].value,
+        email,
+        password: btoa(password), // Encriptación básica
+        fechaRegistro: new Date()
+    });
+
+    alert("✅ ¡Registro exitoso! Redirigiendo...");
+    setTimeout(() => window.location.href = "login.html", 1500);
+});
+
+// Login actualizado
+document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = this.elements[0].value;
+    const password = btoa(this.elements[1].value); // Encriptar para comparar
+
+    const user = getUsers().find(u => 
+        u.email === email && 
+        u.password === password
+    );
+
+    if (user) {
+        localStorage.setItem('currentUser', JSON.stringify({
+            nombre: user.nombre,
+            email,
+            lastLogin: new Date()
+        }));
+        window.location.href = "index.html";
+    } else {
+        alert("❌ Credenciales incorrectas. Intenta nuevamente o regístrate.");
+    }
+});
 });
 // Lógica de quinielas + resultados
 const partidos = [
