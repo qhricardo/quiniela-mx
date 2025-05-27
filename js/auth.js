@@ -67,21 +67,5 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
   } else {
     alert("❌ Credenciales incorrectas. Usa:\nEmail: test@quiniela.com\nContraseña: MX2024!");
   }
-});// /js/auth.js
-document.getElementById("loginForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    
-    // Credenciales de prueba
-    const CORREO_VALIDO = "admin@quiniela.com";
-    const CONTRASEÑA_VALIDA = "Quiniela2024!";
-    
-    if (e.target[0].value === CORREO_VALIDO && 
-        e.target[1].value === CONTRASEÑA_VALIDA) {
-        
-        localStorage.setItem("autenticado", "true");
-        window.location.href = "index.html";
-    } else {
-        alert("Credenciales incorrectas. Usa:\nadmin@quiniela.com\nQuiniela2024!");
-    }
 });
 });
