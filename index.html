@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+        // Verificación de sesión (coloca esto AL INICIO del head)
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = "login.html";
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiniela MX | Jornada 15</title>
@@ -8,6 +14,26 @@
 </head>
 <body>
     <header>
+        <div class="logo">QuinielaMX</div>
+        
+        <!-- Este es el bloque a agregar -->
+        <div class="user-panel">
+            <span id="usernameDisplay"></span>
+            <button id="logoutBtn" class="btn-logout">Cerrar sesión</button>
+        </div>
+         <script>
+        // Mostrar nombre de usuario (coloca al final del body)
+        const usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
+        if (usuario) {
+            document.getElementById('usernameDisplay').textContent = `Bienvenido, ${usuario.nombre}`;
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('usuarioLogueado');
+            window.location.href = "login.html";
+        });
+    </script>
         <nav>
             <div class="logo">Quiniela<span>MX</span></div>
             <div class="user-menu">
