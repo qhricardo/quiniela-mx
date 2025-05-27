@@ -22,6 +22,10 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
     localStorage.setItem("sesionActiva", "true");
     window.location.href = "index.html"; 
 });
+    <form id="loginForm"> <!-- ¡Este ID debe coincidir! -->
+  <!-- ... tus inputs ... -->
+</form>
+<script src="js/auth.js"></script> <!-- Ruta correcta -->
 </script>
     <script src="js/auth.js"></script>
 </body>
