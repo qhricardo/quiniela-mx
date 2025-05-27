@@ -83,32 +83,6 @@
     </div>
 
     <!-- Script de autenticación -->
-   <script src="./js/auth.js"></script>
-    
-    <!-- Validación básica si auth.js falla -->
-    <script>
-        // Backup en caso de que auth.js no cargue
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validación de ejemplo (debería manejarse en auth.js)
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if(email && password) {
-                localStorage.setItem('isAuthenticated', 'true');
-                window.location.href = './index.html';
-            } else {
-                document.getElementById('errorMessage').textContent = 'Por favor completa todos los campos';
-            }<script>
-// Respaldo si auth.js falla
-document.getElementById("loginForm")?.addEventListener("submit", function(e) {
-    e.preventDefault();
-    localStorage.setItem("quinielaAuth", "true");
-    window.location.href = "index.html";
-});
-</script>
-        });
-    </script>
+   <script src="./js/auth.js" defer></script>
 </body>
 </html>
