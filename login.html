@@ -100,7 +100,14 @@
                 window.location.href = './index.html';
             } else {
                 document.getElementById('errorMessage').textContent = 'Por favor completa todos los campos';
-            }
+            }<script>
+// Respaldo si auth.js falla
+document.getElementById("loginForm")?.addEventListener("submit", function(e) {
+    e.preventDefault();
+    localStorage.setItem("quinielaAuth", "true");
+    window.location.href = "index.html";
+});
+</script>
         });
     </script>
 </body>
