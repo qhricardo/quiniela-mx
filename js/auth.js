@@ -3,18 +3,18 @@ const usuariosRegistrados = [
     { email: "usuario@example.com", password: "Quiniela123", nombre: "Apostador MX" }
 ];
 // Base de datos en localStorage
-const DB_KEY = "quinielaUsers";
+const users = JSON.parse(localStorage.getItem('quinielaUsers')) || [];
 
-function getUsers() {
-    return JSON.parse(localStorage.getItem(DB_KEY)) || [];
+function register(email, password) {
+    if (users.some(u => u.email === email)) {
+        return false; // Usuario ya existe
+    }
+    users.push({ email, password: btoa(password) });
+    localStorage.setItem('quinielaUsers', JSON.stringify(users));
+    return true;
 }
 
-function saveUser(user) {
-    const users = getUsers();
-    users.push(user);
-    localStorage.setItem(DB_KEY, JSON.stringify(users));
-}
-
+// Login completo en auth.js
 
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
