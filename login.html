@@ -3,49 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiniela MX - Login</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Login | Quiniela MX</title>
     <style>
-        #form-message {
-            display: none;
+        #form-message, #register-message {
             padding: 10px;
             margin: 10px 0;
-            border-radius: 5px;
-            background-color: #ffebee;
+            border-radius: 4px;
+            display: none;
+        }
+        #form-message.error, #register-message.error {
+            background: #ffebee;
             color: #c62828;
+        }
+        #form-message.success, #register-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>Quiniela MX</h1>
+        
+        <!-- Formulario de Login -->
         <form id="login-form">
-            <div class="form-group">
-                <label for="email">Correo electrónico:</label>
-                <input type="email" id="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Contraseña:</label>
-                <input type="password" id="password" required>
-            </div>
-            <button type="submit" class="btn-login">Iniciar sesión</button>
+            <input type="email" id="email" placeholder="Correo electrónico" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Iniciar sesión</button>
         </form>
-        <div id="form-message" class="alert"></div>
-        <p class="register-link">¿No tienes cuenta? <a href="#" id="register-link">Regístrate</a></p>
+        <div id="form-message" class="error"></div>
+
+        <!-- Formulario de Registro (oculto inicialmente) -->
+        <div id="register-section" style="display: none;">
+            <h2>Registro</h2>
+            <form id="register-form">
+                <input type="email" id="register-email" placeholder="Correo electrónico" required>
+                <input type="password" id="register-password" placeholder="Contraseña (mín. 6 caracteres)" required>
+                <button type="submit">Registrarse</button>
+            </form>
+            <div id="register-message" class="error"></div>
+        </div>
+
+        <p id="toggle-form">¿No tienes cuenta? <a href="#" id="toggle-link">Regístrate aquí</a></p>
     </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
-    <!-- Configuración Firebase -->
+    <!-- Configuración y lógica -->
     <script src="js/firebase-config.js"></script>
-    
-    <!-- Lógica de autenticación -->
     <script src="js/auth.js"></script>
-</body>
-</html>
-    <!-- Script de autenticación -->
-  <script src="./js/auth.js?version=2" defer></script>
 </body>
 </html>
