@@ -2,6 +2,22 @@
 <html lang="es">
 <head>
     <script>
+        if (!localStorage.getItem('usuarioLogueado')) {
+            window.location.href = "login.html";
+        }
+    </script>
+
+    <!-- Resto de tu HTML actual -->
+    <header>
+        <div class="logo">QuinielaMX</div>
+        
+        <!-- PANEL DE USUARIO (NUEVO) -->
+        <div class="user-panel">
+            <span id="usernameDisplay"></span>
+            <button id="logoutBtn" class="btn-logout">Salir</button>
+        </div>
+    </header>
+    <script>
         // Verificación de sesión (coloca esto AL INICIO del head)
         if (!localStorage.getItem('usuarioLogueado')) {
             window.location.href = "login.html";
@@ -68,5 +84,18 @@
     </main>
 
     <script src="js/quiniela.js"></script>
+     <script>
+        // Mostrar usuario activo
+        const usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
+        if (usuario) {
+            document.getElementById('usernameDisplay').textContent = usuario.nombre;
+        }
+
+        // Cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('usuarioLogueado');
+            window.location.href = "login.html";
+        });
+    </script>
 </body>
 </html>
