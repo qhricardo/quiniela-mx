@@ -28,6 +28,15 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         alert("❌ Credenciales incorrectas. Intenta nuevamente.");
     }
 });
+const usuario = usuariosRegistrados.find(u => 
+    u.email === email && 
+    u.password === btoa(password) // Contraseña en base64
+);
+const usuarioData = {
+    ...usuario,
+    expires: new Date().getTime() + 24 * 60 * 60 * 1000
+};
+localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioData));
 
 // Opcional: Registro básico
 document.getElementById('registerLink')?.addEventListener('click', function(e) {
