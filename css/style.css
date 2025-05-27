@@ -61,3 +61,24 @@ header {
     border-radius: 4px;
     cursor: pointer;
 }
+/* Estilos para el panel de usuario */
+.user-panel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+}
+
+.btn-logout {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-logout:hover {
+    background: #c0392b;
+}
