@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <!-- Ruta CORRECTA -->
+    <meta charset="UTF-8">
+    <title>Login - Quiniela MX</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <form id="loginForm">
-        <input type="email" placeholder="test@example.com">
-        <input type="password" placeholder="MX2024!">
-        <button>Ingresar</button>
-    </form>
-    <!-- Ruta CORRECTA -->
+    <div class="auth-container">
+        <h1>🔐 Iniciar Sesión</h1>
+        <form id="loginForm">
+            <input type="email" placeholder="Correo" required>
+            <input type="password" placeholder="Contraseña" required>
+            <button type="submit" class="btn">Ingresar</button>
+        </form>
+        <p class="auth-footer">¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
+        <div id="errorMsg" class="error-message"></div>
+    </div>
+
     <script src="./js/auth.js"></script>
 </body>
 </html>
