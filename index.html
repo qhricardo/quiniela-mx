@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-  <script>
-    if (!localStorage.getItem("quinielaAuth")) {
+<script>
+    if (!sessionStorage.getItem("isAuthenticated")) {
         window.location.href = "login.html";
     }
 </script>
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiniela MX | Jornada 15</title>
