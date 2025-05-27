@@ -1,26 +1,24 @@
-// Versión 2.0 - Funcionamiento garantizado
+// Versión 3.0 - Solución definitiva
 document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.getElementById("loginForm");
+    const form = document.getElementById("loginForm");
     
-    if (loginForm) {
-        loginForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            
-            // Datos del formulario
-            const formData = new FormData(loginForm);
-            const email = formData.get("email");
-            const password = formData.get("password");
+    form?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        // 1. Obtener valores
+        const email = form.elements['email'].value;
+        const password = form.elements['password'].value;
 
-            // Validación de prueba
-            if (email === "admin@quiniela.com" && password === "Quiniela2024!") {
-                // Almacenamiento seguro
-                sessionStorage.setItem("authToken", btoa(email));
-                
-                // Redirección absoluta (requerido para GitHub Pages)
-                window.location.href = "https://qhricardo.github.io/quiniela-mx/index.html";
-            } else {
-                alert("Credenciales incorrectas\nPrueba con:\nEmail: admin@quiniela.com\nClave: Quiniela2024!");
-            }
-        });
-    }
+        // 2. Validación (datos de prueba)
+        if (email === "admin@quiniela.com" && password === "Quiniela2024!") {
+            
+            // 3. Guardar token
+            sessionStorage.setItem("authToken", btoa(email));
+            
+            // 4. Redirección ABSOLUTA (crítico para GitHub Pages)
+            window.location.href = "https://qhricardo.github.io/quiniela-mx/index.html";
+        } else {
+            alert("Credenciales incorrectas\nUse:\nEmail: admin@quiniela.com\nClave: Quiniela2024!");
+        }
+    });
 });
