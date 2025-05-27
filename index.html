@@ -60,6 +60,14 @@
         if (usuario) {
             document.getElementById('usernameDisplay').textContent = usuario.nombre;
         }
+        <button id="logout-btn" class="btn-logout">Cerrar sesión</button>
+
+<script>
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        firebase.auth().signOut()
+            .then(() => window.location.href = 'login.html');
+    });
+</script>
         
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('usuarioLogueado');
