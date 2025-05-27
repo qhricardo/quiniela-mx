@@ -46,4 +46,26 @@ document.getElementById('loginForm')?.addEventListener('submit', function(e) {
     } else {
         document.getElementById('errorMsg').textContent = "Credenciales incorrectas";
     }
+    // Datos de usuario de prueba
+const USUARIO_VALIDO = {
+  email: "test@quiniela.com",
+  password: "MX2024!" // Contraseña encriptada: "TVgyMDI0IQ=="
+};
+
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  
+  const email = this.elements[0].value;
+  const password = this.elements[1].value;
+
+  if (email === USUARIO_VALIDO.email && password === USUARIO_VALIDO.password) {
+    // 1. Guarda sesión
+    localStorage.setItem("sesionActiva", "true");
+    
+    // 2. Redirige al index
+    window.location.href = "index.html";
+  } else {
+    alert("❌ Credenciales incorrectas. Usa:\nEmail: test@quiniela.com\nContraseña: MX2024!");
+  }
+});
 });
