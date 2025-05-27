@@ -18,7 +18,23 @@
     ¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a>
 </p>
     </div>
-
+<script>
+// Mientras implementas auth.js
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validación temporal
+    const email = this.elements[0].value;
+    const password = this.elements[1].value;
+    
+    if (email.includes('@') && password.length >= 8) {
+        localStorage.setItem('userEmail', email);
+        window.location.href = 'index.html';
+    } else {
+        alert('Por favor ingresa un email válido y contraseña (8+ caracteres)');
+    }
+});
+</script>
     <script src="js/auth.js"></script>
 </body>
 </html>
