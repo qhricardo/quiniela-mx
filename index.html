@@ -5,6 +5,12 @@
         window.location.href = "login.html";
     }
 </script>
+    <script>
+    // Verificación de sesión (al inicio del <body>)
+    if (!sessionStorage.getItem("authToken")) {
+        window.location.replace("https://qhricardo.github.io/quiniela-mx/login.html");
+    }
+</script>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
