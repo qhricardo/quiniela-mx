@@ -1,27 +1,27 @@
-// auth.js
-const jwt = require('jsonwebtoken');
+// En middlewares/auth.js
+const { verifyToken } = require('../helpers/jwt');
 
-exports.authenticate = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Acceso no autorizado' });
-  }
-
+const authMiddleware = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+    const token = req.cookies?.jwt || req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ 
+        error: 'Acceso no autorizado',
+        action: 'redirect',
+        target: '/login'
+      });
+    }
+
+    const decoded = verifyToken(token);
+    req.user = await User.findById(decoded.userId);
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    console.error('Auth error:', error);
+    res.status(401).clearCookie('jwt').json({ 
+      error: 'Sesión inválida',
+      action: 'redirect',
+      target: '/login'
+    });
   }
 };
-
-// validators.js
-const { check } = require('express-validator');
-
-exports.registerValidator = [
-  check('username').not().isEmpty().withMessage('Nombre de usuario requerido'),
-  check('email').isEmail().withMessage('Email inválido'),
-  check('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
-];
