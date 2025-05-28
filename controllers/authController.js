@@ -1,31 +1,60 @@
 const User = require('../models/User');
-const { generateJWT } = require('../helpers/jwt');
+const { signToken } = require('../helpers/jwt');
+const RateLimit = require('express-rate-limit');
 
-exports.login = async (req, res) => {
-    const { email, password } = req.body;
+// Configura rate-limiting
+const authLimiter = new RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // Máximo 10 intentos por IP
+  message: 'Demasiados intentos, por favor intente más tarde'
+});
+
+const authController = {
+  login: async (req, res) => {
     try {
-        const user = await User.findOne({ email }).select('+password');
-        if (!user || !(await user.comparePassword(password))) {
-            return res.status(400).json({ error: 'Credenciales inválidas' });
+      const { email, password } = req.body;
+      
+      // Busca usuario sin el password por defecto
+      const user = await User.findOne({ email }).select('+password');
+      
+      if (!user || !(await user.comparePassword(password))) {
+        return res.status(401).json({ 
+          error: 'Credenciales inválidas'
+        });
+      }
+
+      // Crea token sin datos sensibles
+      const token = signToken({ 
+        userId: user._id,
+        role: user.role 
+      });
+
+      // Configura cookie segura
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 900000 // 15 minutos
+      });
+
+      return res.json({
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
         }
-        const token = await generateJWT(user._id);
-        res.json({ token, user: { id: user._id, name: user.name } });
+      });
+
     } catch (error) {
-        res.status(500).json({ error: 'Error en el servidor' });
+      console.error('Login error:', error);
+      return res.status(500).json({ error: 'Error en el servidor' });
     }
+  },
+
+  // Aplicar rate-limiting a las rutas
+  middleware: {
+    authLimiter
+  }
 };
 
-exports.register = async (req, res) => {
-    const { name, email, password } = req.body;
-    try {
-        if (await User.findOne({ email })) {
-            return res.status(400).json({ error: 'El usuario ya existe' });
-        }
-        const user = new User({ name, email, password });
-        await user.save();
-        const token = await generateJWT(user._id);
-        res.status(201).json({ token, user: { id: user._id, name: user.name } });
-    } catch (error) {
-        res.status(500).json({ error: 'Error en el servidor' });
-    }
-};
+module.exports = authController;
