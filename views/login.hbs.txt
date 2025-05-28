@@ -1,28 +1,40 @@
+<!-- En views/login.hbs -->
 <form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Contraseña" required>
-    <button type="submit">Ingresar</button>
-    <div id="loginError" class="error"></div>
+  {{#if error}}
+  <div class="alert alert-danger">
+    {{#each error}}
+      <p>{{this}}</p>
+    {{/each}}
+  </div>
+  {{/if}}
+  
+  <input type="email" name="email" required>
+  <input type="password" name="password" required>
+  <button type="submit">Login</button>
 </form>
 
 <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-        if (data.error) {
-            document.getElementById('loginError').textContent = data.error;
-        } else {
-            localStorage.setItem('token', data.token);
-            window.location.href = '/';
-        }
-    });
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        const errors = await res.json();
+        return showErrors(errors); // Implementa esta función
+      }
+      
+      const { token } = await res.json();
+      localStorage.setItem('jwt', token);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      console.error('Login error:', err);
+    }
+  });
 </script>
