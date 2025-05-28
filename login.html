@@ -1,225 +1,49 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiniela MX | Acceso</title>
-    <style>
-        :root {
-            --verde: #006847;
-            --rojo: #ce1126;
-            --azul: #0038a8;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .auth-container {
-            background: white;
-            width: 400px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .tabs {
-            display: flex;
-        }
-        .tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            background: #eee;
-            transition: all 0.3s;
-        }
-        .tab.active {
-            background: var(--verde);
-            color: white;
-            font-weight: bold;
-        }
-        .form-container {
-            padding: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: var(--verde);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #004d33;
-        }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-            text-align: center;
-        }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-    </style>
-</head>
-<body>
-    <div class="auth-container">
-        <div class="tabs">
-            <div class="tab active" id="login-tab">Iniciar Sesión</div>
-            <div class="tab" id="register-tab">Registrarse</div>
-        </div>
+// Validaciones básicas antes de enviar
+function validateEmail(email) {
+    return /\S+@\S+\.\S+/.test(email);
+}
 
-        <div class="form-container">
-            <!-- Formulario Login -->
-            <div id="login-form">
-                <div class="form-group">
-                    <label for="login-email">Correo electrónico</label>
-                    <input type="email" id="login-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Contraseña</label>
-                    <input type="password" id="login-password" required>
-                </div>
-                <button id="login-btn">Ingresar</button>
-                <div id="login-message" class="message"></div>
-            </div>
+// LOGIN
+document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    const message = document.getElementById('login-message');
 
-            <!-- Formulario Registro -->
-            <div id="register-form" style="display: none;">
-                <div class="form-group">
-                    <label for="register-name">Nombre completo</label>
-                    <input type="text" id="register-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="register-email">Correo electrónico</label>
-                    <input type="email" id="register-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="register-password">Contraseña (mínimo 6 caracteres)</label>
-                    <input type="password" id="register-password" required>
-                </div>
-                <button id="register-btn">Crear Cuenta</button>
-                <div id="register-message" class="message"></div>
-            </div>
-        </div>
-    </div>
+    if (!validateEmail(email) || !password) {
+        showError(message, 'Correo y contraseña requeridos');
+        return;
+    }
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Configuración -->
-    <script src="js/firebase-config.js"></script>
-    
-    <!-- Lógica -->
-    <script>
-        // Referencia a Firestore
-        const db = firebase.firestore();
-        
-        // Toggle entre formularios
-        document.getElementById('login-tab').addEventListener('click', () => {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('register-form').style.display = 'none';
-            document.getElementById('login-tab').classList.add('active');
-            document.getElementById('register-tab').classList.remove('active');
+    try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        window.location.href = "index.html";
+    } catch (error) {
+        showError(message, error.code);
+    }
+});
+
+// REGISTRO
+document.getElementById('register-btn').addEventListener('click', async () => {
+    const name = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value.trim();
+    const message = document.getElementById('register-message');
+
+    if (!name || !validateEmail(email) || password.length < 6) {
+        showError(message, 'Todos los campos son obligatorios y la contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
+    try {
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        await db.collection('users').doc(userCredential.user.uid).set({
+            name,
+            email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-
-        document.getElementById('register-tab').addEventListener('click', () => {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('register-form').style.display = 'block';
-            document.getElementById('register-tab').classList.add('active');
-            document.getElementById('login-tab').classList.remove('active');
-        });
-
-        // Login
-        document.getElementById('login-btn').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const message = document.getElementById('login-message');
-
-            try {
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                window.location.href = "index.html";
-            } catch (error) {
-                showError(message, error.code);
-            }
-        });
-
-        // Registro
-        document.getElementById('register-btn').addEventListener('click', async () => {
-            const name = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const message = document.getElementById('register-message');
-
-            try {
-                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                
-                // Guardar información adicional en Firestore
-                await db.collection('users').doc(userCredential.user.uid).set({
-                    name: name,
-                    email: email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                showSuccess(message, "¡Cuenta creada con éxito! Redirigiendo...");
-                setTimeout(() => window.location.href = "index.html", 1500);
-            } catch (error) {
-                showError(message, error.code);
-            }
-        });
-
-        // Mostrar errores
-        function showError(element, errorCode) {
-            const errors = {
-                'auth/invalid-email': 'Correo electrónico inválido',
-                'auth/user-not-found': 'Usuario no registrado',
-                'auth/wrong-password': 'Contraseña incorrecta',
-                'auth/email-already-in-use': 'El correo ya está registrado',
-                'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres'
-            };
-            
-            element.textContent = errors[errorCode] || "Error desconocido";
-            element.className = "message error";
-            element.style.display = 'block';
-        }
-
-        // Mostrar éxito
-        function showSuccess(element, text) {
-            element.textContent = text;
-            element.className = "message success";
-            element.style.display = 'block';
-        }
-    </script>
-</body>
-</html>
+        showSuccess(message, "¡Cuenta creada con éxito! Redirigiendo...");
+        setTimeout(() => window.location.href = "index.html", 1500);
+    } catch (error) {
+        showError(message, error.code);
+    }
+});
