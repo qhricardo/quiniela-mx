@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Quiniela MX</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .auth-container { max-width: 500px; }
+        .password-hint { 
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: -10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1>📝 Crear Cuenta</h1>
+        <form id="registerForm">
+            <input type="text" placeholder="Nombre completo" required>
+            <input type="email" placeholder="Correo electrónico" required>
+            <input type="password" placeholder="Contraseña" minlength="8" required>
+            <p class="password-hint">Mínimo 8 caracteres, 1 mayúscula y 1 número</p>
+            <button type="submit" class="btn">Registrarme</button>
+        </form>
+        <p class="auth-footer">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
