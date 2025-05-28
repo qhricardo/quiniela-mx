@@ -92,21 +92,44 @@
     </style>
 </head>
 <body>
-   <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Login</title>
-</head>
-<body>
-  <h2>Iniciar Sesión</h2>
-  <form id="loginForm">
-    <input type="text" id="usuario" placeholder="Usuario" required><br>
-    <input type="password" id="contrasena" placeholder="Contraseña" required><br>
-    <button type="submit">Entrar</button>
-  </form>
+    <div class="auth-container">
+        <div class="tabs">
+            <div class="tab active" id="login-tab">Iniciar Sesión</div>
+            <div class="tab" id="register-tab">Registrarse</div>
+        </div>
 
-  <p>¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
+        <div class="form-container">
+            <!-- Formulario Login -->
+            <div id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Correo electrónico</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button id="login-btn">Ingresar</button>
+                <div id="login-message" class="message"></div>
+            </div>
+
+            <!-- Formulario Registro -->
+            <div id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label for="register-name">Nombre completo</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Correo electrónico</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Contraseña (mínimo 6 caracteres)</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <button id="register-btn">Crear Cuenta</button>
+                <div id="register-message" class="message"></div>
+            </div>
         </div>
     </div>
 
@@ -122,12 +145,7 @@
     <script>
         // Referencia a Firestore
         const db = firebase.firestore();
-
-        // Validación de correo
-        function validateEmail(email) {
-            return /\S+@\S+\.\S+/.test(email);
-        }
-
+        
         // Toggle entre formularios
         document.getElementById('login-tab').addEventListener('click', () => {
             document.getElementById('login-form').style.display = 'block';
@@ -144,16 +162,10 @@
         });
 
         // Login
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evitar el envío del formulario
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             const message = document.getElementById('login-message');
-
-            if (!validateEmail(email) || !password) {
-                showError(message, 'Correo y contraseña requeridos');
-                return;
-            }
 
             try {
                 await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -164,25 +176,22 @@
         });
 
         // Registro
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evitar el envío del formulario
-            const name = document.getElementById('register-name').value.trim();
-            const email = document.getElementById('register-email').value.trim();
-            const password = document.getElementById('register-password').value.trim();
+        document.getElementById('register-btn').addEventListener('click', async () => {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
             const message = document.getElementById('register-message');
-
-            if (!name || !validateEmail(email) || password.length < 6) {
-                showError(message, 'Todos los campos son obligatorios y la contraseña debe tener al menos 6 caracteres');
-                return;
-            }
 
             try {
                 const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                
+                // Guardar información adicional en Firestore
                 await db.collection('users').doc(userCredential.user.uid).set({
-                    name,
-                    email,
+                    name: name,
+                    email: email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
                 showSuccess(message, "¡Cuenta creada con éxito! Redirigiendo...");
                 setTimeout(() => window.location.href = "index.html", 1500);
             } catch (error) {
