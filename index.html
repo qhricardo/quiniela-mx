@@ -3,250 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiniela MX - Pronósticos</title>
+    <title>Quiniela MX | Pronósticos</title>
     <style>
+        :root {
+            --verde: #006847;
+            --rojo: #ce1126;
+            --azul: #0038a8;
+            --gris: #f5f5f5;
+        }
         body {
-            font-family: 'Arial', sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--gris);
+            margin: 0;
+            padding: 0;
         }
-        h1 {
-            color: #006847; /* Verde bandera de México */
-            text-align: center;
-        }
-        .quiniela-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .partido {
+        header {
+            background-color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info span {
+            font-weight: 500;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        #logout-btn {
+            background-color: var(--rojo);
+            color: white;
+        }
+        #logout-btn:hover {
+            background-color: #a00d20;
+        }
+        #results-btn {
+            background-color: var(--azul);
+            color: white;
+        }
+        #results-btn:hover {
+            background-color: #002b7a;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            color: var(--verde);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .partido {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .equipos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
         .equipo {
             width: 40%;
             text-align: center;
-            font-weight: bold;
+            font-weight: 500;
         }
         .vs {
             width: 20%;
             text-align: center;
+            color: var(--rojo);
             font-weight: bold;
-            color: #ce1126; /* Rojo bandera */
         }
-        .marcador {
+        .opciones {
             display: flex;
+            justify-content: center;
             gap: 10px;
-            align-items: center;
         }
-        input {
-            width: 40px;
-            text-align: center;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #006847;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .opcion {
+            padding: 8px 20px;
             border-radius: 5px;
             cursor: pointer;
-            display: block;
-            margin: 20px auto;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+        }
+        .opcion:hover {
+            background-color: #f0f0f0;
+        }
+        .opcion.selected {
+            background-color: var(--verde);
+            color: white;
+            border-color: var(--verde);
+        }
+        .local {
+            background-color: #e8f5e9;
+        }
+        .empate {
+            background-color: #fff8e1;
+        }
+        .visitante {
+            background-color: #ffebee;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        #guardar-btn {
+            background-color: var(--verde);
+            color: white;
+            padding: 12px 25px;
             font-size: 16px;
         }
-        button:hover {
-            background: #004d33;
-        }
-        #logout-btn {
-            background: #ce1126;
-        }
-        #logout-btn:hover {
-            background: #a00d20;
+        #guardar-btn:hover {
+            background-color: #004d33;
         }
     </style>
 </head>
 <body>
-    <div class="quiniela-container">
-        <h1>Quiniela MX - Jornada 1</h1>
+    <header>
+        <h2>Quiniela MX</h2>
+        <div class="user-info">
+            <span id="username"></span>
+            <button id="results-btn">Ver Resultados</button>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Pronósticos - Jornada 1</h1>
         
         <!-- Partido 1 -->
         <div class="partido">
-            <div class="equipo">América</div>
-            <div class="vs">VS</div>
-            <div class="equipo">Guadalajara</div>
-            <div class="marcador">
-                <input type="number" id="partido1-local" min="0" max="15" value="0">
-                <span>-</span>
-                <input type="number" id="partido1-visitante" min="0" max="15" value="0">
+            <div class="equipos">
+                <div class="equipo">América</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Guadalajara</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
             </div>
         </div>
 
         <!-- Partido 2 -->
         <div class="partido">
-            <div class="equipo">Cruz Azul</div>
-            <div class="vs">VS</div>
-            <div class="equipo">Monterrey</div>
-            <div class="marcador">
-                <input type="number" id="partido2-local" min="0" max="15" value="0">
-                <span>-</span>
-                <input type="number" id="partido2-visitante" min="0" max="15" value="0">
+            <div class="equipos">
+                <div class="equipo">Cruz Azul</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Monterrey</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
             </div>
         </div>
 
         <!-- Partido 3 -->
         <div class="partido">
-            <div class="equipo">Tigres</div>
-            <div class="vs">VS</div>
-            <div class="equipo">Pumas</div>
-            <div class="marcador">
-                <input type="number" id="partido3-local" min="0" max="15" value="0">
-                <span>-</span>
-                <input type="number" id="partido3-visitante" min="0" max="15" value="0">
+            <div class="equipos">
+                <div class="equipo">Tigres</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Pumas</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
             </div>
         </div>
 
         <!-- Partido 4 -->
         <div class="partido">
-            <div class="equipo">Santos</div>
-            <div class="vs">VS</div>
-            <div class="equipo">Pachuca</div>
-            <div class="marcador">
-                <input type="number" id="partido4-local" min="0" max="15" value="0">
-                <span>-</span>
-                <input type="number" id="partido4-visitante" min="0" max="15" value="0">
+            <div class="equipos">
+                <div class="equipo">Santos</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Pachuca</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
             </div>
         </div>
 
         <!-- Partido 5 -->
         <div class="partido">
-            <div class="equipo">León</div>
-            <div class="vs">VS</div>
-            <div class="equipo">Toluca</div>
-            <div class="marcador">
-                <input type="number" id="partido5-local" min="0" max="15" value="0">
-                <span>-</span>
-                <input type="number" id="partido5-visitante" min="0" max="15" value="0">
+            <div class="equipos">
+                <div class="equipo">León</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Toluca</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
             </div>
         </div>
 
-        <button id="guardar-btn">Guardar Pronósticos</button>
-        <button id="logout-btn">Cerrar Sesión</button>
+        <!-- Partido 6 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Atlas</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Necaxa</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
+            </div>
+        </div>
+
+        <!-- Partido 7 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Mazatlán</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Juárez</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
+            </div>
+        </div>
+
+        <!-- Partido 8 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Querétaro</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Tijuana</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
+            </div>
+        </div>
+
+        <!-- Partido 9 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Puebla</div>
+                <div class="vs">VS</div>
+                <div class="equipo">San Luis</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
+            </div>
+        </div>
+
+        <!-- Partido 10 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Monarcas</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Veracruz</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="1">Gana Local</div>
+                <div class="opcion empate" data-result="X">Empate</div>
+                <div class="opcion visitante" data-result="2">Gana Visitante</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="guardar-btn">Guardar Pronósticos</button>
+        </div>
     </div>
 
-    <!-- Firebase SDKs (ORDEN CRÍTICO) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     
-    <!-- Configuración Firebase -->
+    <!-- Configuración -->
     <script src="js/firebase-config.js"></script>
     
-    <!-- Lógica de la Quiniela -->
+    <!-- Lógica -->
     <script>
-        // Obtener referencia a Firestore
         const db = firebase.firestore();
-        
-        // Función para guardar pronósticos
-        async function guardarPronosticos() {
-            const user = firebase.auth().currentUser;
+        let currentUser = null;
+
+        // Manejar estado de autenticación
+        firebase.auth().onAuthStateChanged(async (user) => {
             if (!user) {
-                alert("Debes iniciar sesión para guardar");
+                window.location.href = 'login.html';
                 return;
             }
-
-            const pronosticos = {
-                usuario: user.email,
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                partidos: [
-                    {
-                        local: "América",
-                        visitante: "Guadalajara",
-                        golesLocal: parseInt(document.getElementById('partido1-local').value),
-                        golesVisitante: parseInt(document.getElementById('partido1-visitante').value)
-                    },
-                    {
-                        local: "Cruz Azul",
-                        visitante: "Monterrey",
-                        golesLocal: parseInt(document.getElementById('partido2-local').value),
-                        golesVisitante: parseInt(document.getElementById('partido2-visitante').value)
-                    },
-                    {
-                        local: "Tigres",
-                        visitante: "Pumas",
-                        golesLocal: parseInt(document.getElementById('partido3-local').value),
-                        golesVisitante: parseInt(document.getElementById('partido3-visitante').value)
-                    },
-                    {
-                        local: "Santos",
-                        visitante: "Pachuca",
-                        golesLocal: parseInt(document.getElementById('partido4-local').value),
-                        golesVisitante: parseInt(document.getElementById('partido4-visitante').value)
-                    },
-                    {
-                        local: "León",
-                        visitante: "Toluca",
-                        golesLocal: parseInt(document.getElementById('partido5-local').value),
-                        golesVisitante: parseInt(document.getElementById('partido5-visitante').value)
-                    }
-                ]
-            };
-
-            try {
-                await db.collection("pronosticos").add(pronosticos);
-                alert("¡Tus pronósticos se guardaron correctamente!");
-            } catch (error) {
-                console.error("Error al guardar:", error);
-                alert("Error: " + error.message);
+            
+            currentUser = user;
+            
+            // Mostrar nombre de usuario
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                document.getElementById('username').textContent = userDoc.data().name;
+            } else {
+                document.getElementById('username').textContent = user.email;
             }
-        }
-
-        // Función para cargar pronósticos previos
-        async function cargarPronosticos() {
-            const user = firebase.auth().currentUser;
-            if (!user) return;
-
-            const querySnapshot = await db.collection("pronosticos")
-                .where("usuario", "==", user.email)
-                .orderBy("fecha", "desc")
+            
+            // Cargar pronósticos anteriores
+            const pronosticosSnapshot = await db.collection('pronosticos')
+                .where('userId', '==', user.uid)
+                .orderBy('fecha', 'desc')
                 .limit(1)
                 .get();
-
-            if (!querySnapshot.empty) {
-                const ultimoPronostico = querySnapshot.docs[0].data();
-                ultimoPronostico.partidos.forEach((partido, index) => {
-                    const idx = index + 1;
-                    document.getElementById(`partido${idx}-local`).value = partido.golesLocal;
-                    document.getElementById(`partido${idx}-visitante`).value = partido.golesVisitante;
+                
+            if (!pronosticosSnapshot.empty) {
+                const pronosticos = pronosticosSnapshot.docs[0].data();
+                pronosticos.partidos.forEach((partido, index) => {
+                    const opcion = document.querySelector(`.partido:nth-child(${index + 1}) .opcion[data-result="${partido.prediccion}"]`);
+                    if (opcion) {
+                        opcion.classList.add('selected');
+                    }
                 });
             }
-        }
+        });
 
-        // Cerrar sesión
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            firebase.auth().signOut().then(() => {
-                window.location.href = 'login.html';
+        // Selección de resultados
+        document.querySelectorAll('.opcion').forEach(opcion => {
+            opcion.addEventListener('click', function() {
+                // Remover selección previa en este partido
+                const partido = this.closest('.partido');
+                partido.querySelectorAll('.opcion').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Seleccionar nueva opción
+                this.classList.add('selected');
             });
         });
 
-        // Evento para guardar
-        document.getElementById('guardar-btn').addEventListener('click', guardarPronosticos);
-
-        // Al cargar la página
-        document.addEventListener('DOMContentLoaded', () => {
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    cargarPronosticos();
+        // Guardar pronósticos
+        document.getElementById('guardar-btn').addEventListener('click', async () => {
+            const partidos = [];
+            let completo = true;
+            
+            // Recolectar predicciones
+            document.querySelectorAll('.partido').forEach((partidoEl, index) => {
+                const equipos = partidoEl.querySelectorAll('.equipo');
+                const opcionSeleccionada = partidoEl.querySelector('.opcion.selected');
+                
+                if (!opcionSeleccionada) {
+                    completo = false;
+                    partidoEl.style.border = '1px solid red';
+                    setTimeout(() => {
+                        partidoEl.style.border = 'none';
+                    }, 1000);
+                    return;
                 }
+                
+                partidos.push({
+                    local: equipos[0].textContent,
+                    visitante: equipos[1].textContent,
+                    prediccion: opcionSeleccionada.getAttribute('data-result')
+                });
             });
+            
+            if (!completo) {
+                alert('¡Debes seleccionar un resultado para todos los partidos!');
+                return;
+            }
+            
+            try {
+                await db.collection('pronosticos').add({
+                    userId: currentUser.uid,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    partidos: partidos
+                });
+                alert('¡Pronósticos guardados correctamente!');
+            } catch (error) {
+                console.error(error);
+                alert('Error al guardar: ' + error.message);
+            }
+        });
+
+        // Ver resultados
+        document.getElementById('results-btn').addEventListener('click', () => {
+            window.location.href = 'resultados.html';
+        });
+
+        // Cerrar sesión
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut();
         });
     </script>
 </body>
