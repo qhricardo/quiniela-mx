@@ -1,40 +1,80 @@
-<!-- En views/login.hbs -->
-<form id="loginForm">
-  {{#if error}}
-  <div class="alert alert-danger">
-    {{#each error}}
-      <p>{{this}}</p>
-    {{/each}}
+<form id="loginForm" class="needs-validation" novalidate>
+  <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+    <input 
+      type="email" 
+      class="form-control" 
+      id="email" 
+      name="email"
+      required
+      pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+    >
+    <div class="invalid-feedback">Por favor ingrese un email válido</div>
   </div>
-  {{/if}}
   
-  <input type="email" name="email" required>
-  <input type="password" name="password" required>
-  <button type="submit">Login</button>
+  <div class="mb-3">
+    <label for="password" class="form-label">Contraseña</label>
+    <input 
+      type="password" 
+      class="form-control" 
+      id="password" 
+      name="password"
+      required
+      minlength="8"
+    >
+    <div class="invalid-feedback">Mínimo 8 caracteres</div>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100">
+    <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
+    Ingresar
+  </button>
+  
+  <div id="errorAlert" class="alert alert-danger mt-3 d-none"></div>
 </form>
 
 <script>
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+(() => {
+  const form = document.getElementById('loginForm');
+  const spinner = document.getElementById('spinner');
+  const errorAlert = document.getElementById('errorAlert');
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
     
+    if (!form.checkValidity()) {
+      e.stopPropagation();
+      form.classList.add('was-validated');
+      return;
+    }
+
     try {
-      const res = await fetch('/auth/login', {
+      spinner.classList.remove('d-none');
+      errorAlert.classList.add('d-none');
+
+      const response = await fetch('/auth/login', {
         method: 'POST',
-        body: JSON.stringify(Object.fromEntries(formData)),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email.value,
+          password: form.password.value
+        }),
+        credentials: 'include' // Para cookies HTTP-Only
       });
-      
-      if (!res.ok) {
-        const errors = await res.json();
-        return showErrors(errors); // Implementa esta función
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || 'Error en la autenticación');
       }
-      
-      const { token } = await res.json();
-      localStorage.setItem('jwt', token);
+
       window.location.href = '/dashboard';
-    } catch (err) {
-      console.error('Login error:', err);
+      
+    } catch (error) {
+      errorAlert.textContent = error.message;
+      errorAlert.classList.remove('d-none');
+    } finally {
+      spinner.classList.add('d-none');
     }
   });
+})();
 </script>
