@@ -1,5 +1,15 @@
+// Verifica autenticación en cada página
 firebase.auth().onAuthStateChanged((user) => {
-  if (!user && window.location.pathname.includes("index.html")) {
-    window.location.href = "login.html";
+  const currentPage = window.location.pathname.split('/').pop();
+  
+  // Páginas que no requieren autenticación
+  const publicPages = ['login.html', 'register.html'];
+  
+  if (!user && !publicPages.includes(currentPage)) {
+    window.location.href = 'login.html';
+  }
+  
+  if (user && publicPages.includes(currentPage)) {
+    window.location.href = 'index.html';
   }
 });
