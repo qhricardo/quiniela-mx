@@ -1,14 +1,23 @@
+// En helpers/jwt.js
 const jwt = require('jsonwebtoken');
 
-const generateJWT = (userId) => {
-    return new Promise((resolve, reject) => {
-        jwt.sign(
-            { uid: userId },
-            process.env.JWT_SECRET,
-            { expiresIn: '4h' },
-            (err, token) => err ? reject(err) : resolve(token)
-        );
-    });
+const generateToken = (userId) => {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_SECRET,
+    { 
+      expiresIn: '1h',
+      issuer: 'quiniela-mx-api',
+      audience: 'quiniela-mx-web'
+    }
+  );
 };
 
-module.exports = { generateJWT };
+const verifyToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET, {
+    issuer: 'quiniela-mx-api',
+    audience: 'quiniela-mx-web'
+  });
+};
+
+module.exports = { generateToken, verifyToken };
