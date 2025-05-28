@@ -65,13 +65,16 @@
             text-align: center;
             margin-bottom: 30px;
         }
+        .resultados-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            margin-top: 20px;
         }
         th, td {
             padding: 12px 15px;
@@ -88,9 +91,6 @@
         tr.incorrect {
             background-color: #ffebee;
         }
-        tr.partial {
-            background-color: #fff8e1;
-        }
         .puntos {
             font-weight: bold;
             text-align: center;
@@ -102,6 +102,11 @@
         .actions {
             margin-top: 30px;
             text-align: center;
+        }
+        .loading {
+            text-align: center;
+            color: var(--verde);
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -117,22 +122,25 @@
     <div class="container">
         <h1>Resultados - Jornada 1</h1>
         
-        <table id="results-table">
-            <thead>
-                <tr>
-                    <th>Partido</th>
-                    <th>Tu Pronóstico</th>
-                    <th>Resultado Real</th>
-                    <th>Puntos</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Los resultados se cargarán con JavaScript -->
-            </tbody>
-        </table>
+        <div class="resultados-container">
+            <div id="loading" class="loading">Cargando tus resultados...</div>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Partido</th>
+                        <th>Tu Pronóstico</th>
+                        <th>Resultado Real</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los resultados se cargarán con JavaScript -->
+                </tbody>
+            </table>
 
-        <div class="actions">
-            <button id="back-btn">Volver a Pronósticos</button>
+            <div class="actions">
+                <button id="back-btn">Volver a Pronósticos</button>
+            </div>
         </div>
     </div>
 
@@ -170,11 +178,7 @@
             
             // Mostrar nombre de usuario
             const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists) {
-                document.getElementById('username').textContent = userDoc.data().name;
-            } else {
-                document.getElementById('username').textContent = user.email;
-            }
+            document.getElementById('username').textContent = userDoc.exists ? userDoc.data().name : user.email;
             
             // Cargar pronósticos del usuario
             const pronosticosSnapshot = await db.collection('pronosticos')
@@ -183,17 +187,17 @@
                 .limit(1)
                 .get();
                 
+            const tbody = document.querySelector('#results-table tbody');
+            document.getElementById('loading').style.display = 'none';
+            
             if (!pronosticosSnapshot.empty) {
                 const pronosticos = pronosticosSnapshot.docs[0].data();
-                const tbody = document.querySelector('#results-table tbody');
                 let totalPuntos = 0;
                 
                 pronosticos.partidos.forEach((partido, index) => {
                     const partidoNum = index + 1;
                     const prediccion = partido.prediccion;
                     const resultadoReal = resultadosReales[partidoNum];
-                    
-                    // Calcular puntos
                     let puntos = 0;
                     let clase = 'incorrect';
                     
@@ -204,20 +208,18 @@
                     
                     totalPuntos += puntos;
                     
-                    // Crear fila
                     const row = document.createElement('tr');
                     row.className = clase;
                     row.innerHTML = `
                         <td>${partido.local} vs ${partido.visitante}</td>
-                        <td>${prediccion}</td>
-                        <td>${resultadoReal}</td>
+                        <td>${formatPrediccion(prediccion)}</td>
+                        <td>${formatPrediccion(resultadoReal)}</td>
                         <td class="puntos">${puntos}</td>
                     `;
-                    
                     tbody.appendChild(row);
                 });
                 
-                // Agregar total
+                // Fila de total
                 const totalRow = document.createElement('tr');
                 totalRow.className = 'total-row';
                 totalRow.innerHTML = `
@@ -225,15 +227,24 @@
                     <td class="puntos"><strong>${totalPuntos}</strong></td>
                 `;
                 tbody.appendChild(totalRow);
+                
             } else {
-                // No hay pronósticos guardados
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="4" style="text-align: center;">No has enviado pronósticos para esta jornada</td>
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No has enviado pronósticos para esta jornada</td>
+                    </tr>
                 `;
-                document.querySelector('#results-table tbody').appendChild(row);
             }
         });
+
+        function formatPrediccion(value) {
+            const format = {
+                '1': 'Gana Local',
+                'X': 'Empate',
+                '2': 'Gana Visitante'
+            };
+            return format[value] || value;
+        }
 
         // Volver a pronósticos
         document.getElementById('back-btn').addEventListener('click', () => {
