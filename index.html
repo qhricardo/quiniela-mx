@@ -32,6 +32,7 @@
         .equipo {
             width: 40%;
             text-align: center;
+            font-weight: bold;
         }
         .vs {
             width: 20%;
@@ -42,11 +43,14 @@
         .marcador {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
         input {
             width: 40px;
             text-align: center;
-            padding: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         button {
             background: #006847;
@@ -57,12 +61,16 @@
             cursor: pointer;
             display: block;
             margin: 20px auto;
+            font-size: 16px;
         }
         button:hover {
             background: #004d33;
         }
         #logout-btn {
             background: #ce1126;
+        }
+        #logout-btn:hover {
+            background: #a00d20;
         }
     </style>
 </head>
@@ -76,9 +84,9 @@
             <div class="vs">VS</div>
             <div class="equipo">Guadalajara</div>
             <div class="marcador">
-                <input type="number" min="0" class="goles-local">
+                <input type="number" id="partido1-local" min="0" max="15" value="0">
                 <span>-</span>
-                <input type="number" min="0" class="goles-visitante">
+                <input type="number" id="partido1-visitante" min="0" max="15" value="0">
             </div>
         </div>
 
@@ -88,9 +96,9 @@
             <div class="vs">VS</div>
             <div class="equipo">Monterrey</div>
             <div class="marcador">
-                <input type="number" min="0" class="goles-local">
+                <input type="number" id="partido2-local" min="0" max="15" value="0">
                 <span>-</span>
-                <input type="number" min="0" class="goles-visitante">
+                <input type="number" id="partido2-visitante" min="0" max="15" value="0">
             </div>
         </div>
 
@@ -100,9 +108,9 @@
             <div class="vs">VS</div>
             <div class="equipo">Pumas</div>
             <div class="marcador">
-                <input type="number" min="0" class="goles-local">
+                <input type="number" id="partido3-local" min="0" max="15" value="0">
                 <span>-</span>
-                <input type="number" min="0" class="goles-visitante">
+                <input type="number" id="partido3-visitante" min="0" max="15" value="0">
             </div>
         </div>
 
@@ -112,9 +120,9 @@
             <div class="vs">VS</div>
             <div class="equipo">Pachuca</div>
             <div class="marcador">
-                <input type="number" min="0" class="goles-local">
+                <input type="number" id="partido4-local" min="0" max="15" value="0">
                 <span>-</span>
-                <input type="number" min="0" class="goles-visitante">
+                <input type="number" id="partido4-visitante" min="0" max="15" value="0">
             </div>
         </div>
 
@@ -124,9 +132,9 @@
             <div class="vs">VS</div>
             <div class="equipo">Toluca</div>
             <div class="marcador">
-                <input type="number" min="0" class="goles-local">
+                <input type="number" id="partido5-local" min="0" max="15" value="0">
                 <span>-</span>
-                <input type="number" min="0" class="goles-visitante">
+                <input type="number" id="partido5-visitante" min="0" max="15" value="0">
             </div>
         </div>
 
@@ -134,9 +142,94 @@
         <button id="logout-btn">Cerrar Sesión</button>
     </div>
 
-    <!-- Firebase y lógica -->
+    <!-- Firebase SDKs (ORDEN CRÍTICO) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Configuración Firebase -->
     <script src="js/firebase-config.js"></script>
+    
+    <!-- Lógica de la Quiniela -->
     <script>
+        // Obtener referencia a Firestore
+        const db = firebase.firestore();
+        
+        // Función para guardar pronósticos
+        async function guardarPronosticos() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert("Debes iniciar sesión para guardar");
+                return;
+            }
+
+            const pronosticos = {
+                usuario: user.email,
+                fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                partidos: [
+                    {
+                        local: "América",
+                        visitante: "Guadalajara",
+                        golesLocal: parseInt(document.getElementById('partido1-local').value),
+                        golesVisitante: parseInt(document.getElementById('partido1-visitante').value)
+                    },
+                    {
+                        local: "Cruz Azul",
+                        visitante: "Monterrey",
+                        golesLocal: parseInt(document.getElementById('partido2-local').value),
+                        golesVisitante: parseInt(document.getElementById('partido2-visitante').value)
+                    },
+                    {
+                        local: "Tigres",
+                        visitante: "Pumas",
+                        golesLocal: parseInt(document.getElementById('partido3-local').value),
+                        golesVisitante: parseInt(document.getElementById('partido3-visitante').value)
+                    },
+                    {
+                        local: "Santos",
+                        visitante: "Pachuca",
+                        golesLocal: parseInt(document.getElementById('partido4-local').value),
+                        golesVisitante: parseInt(document.getElementById('partido4-visitante').value)
+                    },
+                    {
+                        local: "León",
+                        visitante: "Toluca",
+                        golesLocal: parseInt(document.getElementById('partido5-local').value),
+                        golesVisitante: parseInt(document.getElementById('partido5-visitante').value)
+                    }
+                ]
+            };
+
+            try {
+                await db.collection("pronosticos").add(pronosticos);
+                alert("¡Tus pronósticos se guardaron correctamente!");
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("Error: " + error.message);
+            }
+        }
+
+        // Función para cargar pronósticos previos
+        async function cargarPronosticos() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            const querySnapshot = await db.collection("pronosticos")
+                .where("usuario", "==", user.email)
+                .orderBy("fecha", "desc")
+                .limit(1)
+                .get();
+
+            if (!querySnapshot.empty) {
+                const ultimoPronostico = querySnapshot.docs[0].data();
+                ultimoPronostico.partidos.forEach((partido, index) => {
+                    const idx = index + 1;
+                    document.getElementById(`partido${idx}-local`).value = partido.golesLocal;
+                    document.getElementById(`partido${idx}-visitante`).value = partido.golesVisitante;
+                });
+            }
+        }
+
         // Cerrar sesión
         document.getElementById('logout-btn').addEventListener('click', () => {
             firebase.auth().signOut().then(() => {
@@ -144,10 +237,16 @@
             });
         });
 
-        // Guardar pronósticos (ejemplo básico)
-        document.getElementById('guardar-btn').addEventListener('click', () => {
-            alert('Pronósticos guardados (esta es una simulación)');
-            // Aquí iría la lógica para guardar en Firebase Firestore
+        // Evento para guardar
+        document.getElementById('guardar-btn').addEventListener('click', guardarPronosticos);
+
+        // Al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    cargarPronosticos();
+                }
+            });
         });
     </script>
 </body>
