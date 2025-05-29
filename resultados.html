@@ -1,163 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Todos los Pronósticos | Quiniela MX</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resumen de Pronósticos por Usuario</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0;
+      background: #f4f4f4;
       padding: 20px;
     }
     h1 {
-      color: #006847;
       text-align: center;
-    }
-    .usuario-bloque {
-      margin-bottom: 40px;
-      background: white;
-      padding: 20px;
-      border-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      color: #006847;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 30px;
     }
     th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
     }
     th {
-      background: #006847;
+      background-color: #006847;
       color: white;
     }
-    .correct {
-      background: #e8f5e9;
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
-    .incorrect {
-      background: #ffebee;
+    .correcto {
+      background-color: #d4edda;
+    }
+    .incorrecto {
+      background-color: #f8d7da;
     }
     .total {
-      background: #eee;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-  <h1>Todos los Pronósticos Registrados</h1>
-  <div id="contenido"></div>
+<h1>Pronósticos por Usuario (Vista Horizontal)</h1>
+<table id="tabla-resultados">
+  <!-- La tabla se llenará con JavaScript -->
+</table>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <!-- Configuración de Firebase -->
-  <script src="js/firebase-config.js"></script>
+<!-- Configuración de Firebase -->
+<script src="js/firebase-config.js"></script>
 
-  <script>
-    const db = firebase.firestore();
-    const contenedor = document.getElementById('contenido');
+<script>
+  const db = firebase.firestore();
 
-    const resultadosReales = {
-      1: "X", 2: "1", 3: "2", 4: "1", 5: "X",
-      6: "2", 7: "1", 8: "X", 9: "2", 10: "1"
-    };
+  const resultadosReales = {
+    1: "X", 2: "1", 3: "2", 4: "1", 5: "X",
+    6: "2", 7: "1", 8: "X", 9: "2", 10: "1"
+  };
 
-    async function obtenerNombreUsuario(uid) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        const data = userDoc.data();
-        return data.name || data.email || uid;
-      }
-      return uid;
+  function formato(pred) {
+    const mapa = { "1": "L", "X": "E", "2": "V" };
+    return mapa[pred] || "-";
+  }
+
+  async function obtenerNombre(uid) {
+    const doc = await db.collection("users").doc(uid).get();
+    if (doc.exists) {
+      const d = doc.data();
+      return d.name || d.email || uid;
     }
+    return uid;
+  }
 
-    async function cargarTodosLosPronosticos() {
-      const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
-      if (snapshot.empty) {
-        contenedor.innerHTML = "<p>No hay pronósticos registrados.</p>";
-        return;
-      }
+  async function mostrarResultados() {
+    const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
+    const usuarios = {};
 
-      const usuariosPronosticos = {};
-
-      // Agrupar pronósticos por usuario
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (!usuariosPronosticos[data.userId]) usuariosPronosticos[data.userId] = [];
-        usuariosPronosticos[data.userId].push(data);
-      });
-
-      for (const userId in usuariosPronosticos) {
-        const nombre = await obtenerNombreUsuario(userId);
-        const pronosticos = usuariosPronosticos[userId];
-
-        let html = `<div class="usuario-bloque"><h2>${nombre}</h2>`;
-
-        pronosticos.forEach((p, index) => {
-          let total = 0;
-          html += `
-            <h3>Jornada ${index + 1}</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Partido</th>
-                  <th>Pronóstico</th>
-                  <th>Resultado</th>
-                  <th>Puntos</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-
-          p.partidos.forEach((partido, i) => {
-            const pred = partido.prediccion;
-            const real = resultadosReales[i + 1];
-            const puntos = pred === real ? 3 : 0;
-            total += puntos;
-            html += `
-              <tr class="${pred === real ? 'correct' : 'incorrect'}">
-                <td>${partido.local} vs ${partido.visitante}</td>
-                <td>${formatear(pred)}</td>
-                <td>${formatear(real)}</td>
-                <td>${puntos}</td>
-              </tr>
-            `;
-          });
-
-          html += `
-              <tr class="total">
-                <td colspan="3">Total Jornada</td>
-                <td>${total}</td>
-              </tr>
-              </tbody>
-            </table>
-          `;
-        });
-
-        html += `</div>`;
-        contenedor.innerHTML += html;
-      }
-    }
-
-    function formatear(valor) {
-      const mapa = { "1": "Gana Local", "X": "Empate", "2": "Gana Visitante" };
-      return mapa[valor] || valor;
-    }
-
-    firebase.auth().onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        cargarTodosLosPronosticos();
-      }
+    // Agrupar el pronóstico más reciente por usuario
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      if (!usuarios[d.userId]) usuarios[d.userId] = d;
     });
-  </script>
+
+    const tabla = document.getElementById("tabla-resultados");
+    let header = `<tr><th>Usuario</th>`;
+    for (let i = 1; i <= 10; i++) {
+      header += `<th>J${i}</th>`;
+    }
+    header += `<th>Total</th></tr>`;
+    tabla.innerHTML = header;
+
+    for (const uid in usuarios) {
+      const data = usuarios[uid];
+      const nombre = await obtenerNombre(uid);
+      let fila = `<tr><td>${nombre}</td>`;
+      let total = 0;
+
+      for (let i = 0; i < 10; i++) {
+        const partido = data.partidos[i];
+        const pred = partido?.prediccion || "-";
+        const real = resultadosReales[i + 1];
+        const correcto = pred === real;
+        const clase = correcto ? 'correcto' : 'incorrecto';
+        total += correcto ? 3 : 0;
+        fila += `<td class="${clase}">${formato(pred)}</td>`;
+      }
+
+      fila += `<td class="total">${total}</td></tr>`;
+      tabla.innerHTML += fila;
+    }
+  }
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      mostrarResultados();
+    } else {
+      window.location.href = "login.html";
+    }
+  });
+</script>
 </body>
 </html>
-
