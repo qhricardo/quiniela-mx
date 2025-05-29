@@ -128,10 +128,12 @@
 
         let nombre = 'Desconocido';
         try {
-          const userDoc = await db.collection('users').doc(data.userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
+          if (data.userId) {
+            const userQuery = await db.collection('users').where('uid', '==', data.userId).limit(1).get();
+            if (!userQuery.empty) {
+              const userData = userQuery.docs[0].data();
+              nombre = userData.name || userData.email || 'Sin nombre';
+            }
           }
         } catch (err) {
           console.error("Error al obtener usuario:", err);
