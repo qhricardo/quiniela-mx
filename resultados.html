@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resumen de Pronósticos por Usuario</title>
+  <title>Historial de Pronósticos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -45,7 +45,7 @@
 </head>
 <body>
 
-<h1>Pronósticos por Usuario (Vista Horizontal)</h1>
+<h1>Historial de Pronósticos por Usuario</h1>
 <table id="tabla-resultados">
   <!-- La tabla se llenará con JavaScript -->
 </table>
@@ -71,6 +71,16 @@
     return mapa[pred] || "-";
   }
 
+  function formatearFecha(fecha) {
+    const opciones = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return fecha.toLocaleDateString('es-MX', opciones);
+  }
+
+  function formatearHora(fecha) {
+    const opciones = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    return fecha.toLocaleTimeString('es-MX', opciones);
+  }
+
   async function obtenerNombre(uid) {
     const doc = await db.collection("users").doc(uid).get();
     if (doc.exists) {
@@ -82,26 +92,22 @@
 
   async function mostrarResultados() {
     const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
-    const usuarios = {};
-
-    // Agrupar el pronóstico más reciente por usuario
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      if (!usuarios[d.userId]) usuarios[d.userId] = d;
-    });
 
     const tabla = document.getElementById("tabla-resultados");
-    let header = `<tr><th>Usuario</th>`;
+    let header = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
     for (let i = 1; i <= 10; i++) {
       header += `<th>P${i}</th>`;
     }
     header += `<th>Total</th></tr>`;
     tabla.innerHTML = header;
 
-    for (const uid in usuarios) {
-      const data = usuarios[uid];
-      const nombre = await obtenerNombre(uid);
-      let fila = `<tr><td>${nombre}</td>`;
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const nombre = await obtenerNombre(data.userId);
+      const fechaObj = data.fecha.toDate();
+      const fechaStr = formatearFecha(fechaObj);
+      const horaStr = formatearHora(fechaObj);
+      let fila = `<tr><td>${nombre}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
       let total = 0;
 
       for (let i = 0; i < 10; i++) {
@@ -129,4 +135,3 @@
 </script>
 </body>
 </html>
-
