@@ -73,8 +73,13 @@
     };
 
     async function obtenerNombre(uid) {
-      const doc = await db.collection("users").doc(uid).get();
-      return doc.exists ? doc.data().name || "Usuario" : "Desconocido";
+      try {
+        const doc = await db.collection("users").doc(uid).get();
+        return doc.exists ? doc.data().name || "Usuario" : "Desconocido";
+      } catch (error) {
+        console.error("Error al obtener el nombre del usuario:", error);
+        return "Desconocido";
+      }
     }
 
     function formato(prediccion) {
@@ -100,30 +105,35 @@
       encabezado += `<th>Total</th></tr>`;
       tabla.innerHTML += encabezado;
 
-      const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
+      try {
+        const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const usuario = await obtenerNombre(data.userId);
-        const fecha = data.fecha.toDate();
-        const fechaStr = formatearFecha(fecha);
-        const horaStr = formatearHora(fecha);
-        const partidos = data.partidos || [];
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const usuario = await obtenerNombre(data.userId);
+          const fecha = data.fecha.toDate();
+          const fechaStr = formatearFecha(fecha);
+          const horaStr = formatearHora(fecha);
+          const partidos = data.partidos || [];
 
-        let fila = `<tr><td>${usuario}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
-        let total = 0;
+          let fila = `<tr><td>${usuario}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
+          let total = 0;
 
-        for (let i = 0; i < 10; i++) {
-          const prediccion = partidos[i]?.prediccion || "-";
-          const real = resultadosReales[i + 1];
-          const correcta = prediccion === real;
-          const clase = correcta ? "correcto" : "incorrecto";
-          total += correcta ? 3 : 0;
-          fila += `<td class="${clase}">${formato(prediccion)}</td>`;
+          for (let i = 0; i < 10; i++) {
+            const prediccion = partidos[i]?.prediccion || "-";
+            const real = resultadosReales[i + 1];
+            const correcta = prediccion === real;
+            const clase = correcta ? "correcto" : "incorrecto";
+            total += correcta ? 3 : 0;
+            fila += `<td class="${clase}">${formato(prediccion)}</td>`;
+          }
+
+          fila += `<td class="total">${total}</td></tr>`;
+          tabla.innerHTML += fila;
         }
-
-        fila += `<td class="total">${total}</td></tr>`;
-        tabla.innerHTML += fila;
+      } catch (error) {
+        console.error("Error al obtener los pronósticos:", error);
+        tabla.innerHTML += `<tr><td colspan="13">Error al cargar los resultados.</td></tr>`;
       }
     }
 
@@ -143,3 +153,4 @@
   </script>
 </body>
 </html>
+
