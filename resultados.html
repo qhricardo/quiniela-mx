@@ -49,13 +49,8 @@
     #logout-btn:hover {
       background-color: #a00d1c;
     }
-    .resultado-input {
-      width: 40px;
-      text-transform: uppercase;
-      text-align: center;
-    }
-    .acierto {
-      background-color: yellow;
+    .highlight {
+      background-color: yellow !important;
     }
   </style>
 </head>
@@ -68,64 +63,28 @@
 
   <h1>Pronósticos Registrados</h1>
 
-  <!-- Tabla para ingresar resultados manualmente -->
-  <table id="tabla-inputs">
+  <table>
     <thead>
       <tr>
-        <th>Resultados</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
-        <th>Total</th>
+        <th colspan="3">Resultados Oficiales</th>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
+        <th>P6</th><th>P7</th><th>P8</th><th>P9</th><th>P10</th>
       </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Ingresar</strong></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="0" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="1" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="2" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="3" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="4" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="5" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="6" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="7" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="8" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="9" /></td>
-        <td></td>
+      <tr id="input-resultados">
+        <td colspan="3">Ingresar Resultados</td>
+        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
       </tr>
-    </tbody>
-  </table>
-
-  <!-- Tabla de resultados -->
-  <table id="resultados">
-    <thead>
       <tr>
         <th>Usuario</th>
         <th>Fecha</th>
         <th>Hora</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
-        <th>Aciertos</th>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
+        <th>P6</th><th>P7</th><th>P8</th><th>P9</th><th>P10</th>
+        <th>Total</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Se insertan dinámicamente -->
+    <tbody id="resultados-body">
+      <!-- Contenido dinámico -->
     </tbody>
   </table>
 
@@ -133,41 +92,30 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
 
+  <script src="js/firebase-config.js"></script>
   <script>
     const db = firebase.firestore();
-    const tbody = document.querySelector("#resultados tbody");
-    const inputs = document.querySelectorAll(".resultado-input");
-
-    let resultadosReales = Array(10).fill(null);
-
-    inputs.forEach(input => {
-      input.addEventListener("input", () => {
-        const index = parseInt(input.dataset.partido);
-        resultadosReales[index] = input.value.toUpperCase();
-        cargarResultados();
-      });
-    });
+    const tbody = document.querySelector("#resultados-body");
 
     async function cargarResultados() {
-      tbody.innerHTML = "";
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
+      const resultadosOficiales = {};
+      for (let i = 1; i <= 10; i++) {
+        const val = document.getElementById(`res-${i}`).value.toUpperCase();
+        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
+      }
+
+      tbody.innerHTML = '';
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        const userId = data.userId;
         const partidos = data.partidos || [];
         let nombre = 'Desconocido';
-
-        try {
-          const userDoc = await db.collection('users').doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (err) {
-          console.error("Error al obtener usuario:", err);
+        let userDoc = await db.collection('users').doc(data.userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          nombre = userData.name || userData.email || 'Sin nombre';
         }
 
         let fechaTexto = '', horaTexto = '';
@@ -177,45 +125,39 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        let aciertos = 0;
+        let total = 0;
+        const tds = partidos.map((p, i) => {
+          const res = p.prediccion;
+          const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
+          if (coincide) total++;
+          return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
+        });
+
         const fila = document.createElement('tr');
         fila.innerHTML = `
           <td>${nombre}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
+          ${tds.join('')}
+          <td>${total}</td>
         `;
-
-        for (let i = 0; i < 10; i++) {
-          const prediccion = partidos[i]?.prediccion || '-';
-          const coincide = resultadosReales[i] && resultadosReales[i] === prediccion;
-          if (coincide) aciertos++;
-          const td = document.createElement('td');
-          td.textContent = prediccion;
-          if (coincide) td.classList.add('acierto');
-          fila.appendChild(td);
-        }
-
-        const tdTotal = document.createElement('td');
-        tdTotal.textContent = aciertos;
-        fila.appendChild(tdTotal);
         tbody.appendChild(fila);
       }
     }
+
+    // Listeners a inputs para actualizar la tabla cuando se cambian resultados
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarResultados();
+      for (let i = 1; i <= 10; i++) {
+        document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
+      }
+    });
 
     document.getElementById('logout-btn').addEventListener('click', () => {
       firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
       });
     });
-
-    window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
 </body>
 </html>
-
-
-    window.addEventListener('DOMContentLoaded', cargarResultados);
-  </script>
-</body>
-</html>
-
