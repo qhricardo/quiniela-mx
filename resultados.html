@@ -2,56 +2,18 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resultados de Quiniela</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #006847;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background-color: white;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #006847;
-      color: white;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: white;
-      padding: 10px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    #logout-btn {
-      background-color: #ce1126;
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #logout-btn:hover {
-      background-color: #a00d1c;
-    }
-    .highlight {
-      background-color: yellow !important;
-    }
+    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; margin:0; }
+    h1 { text-align: center; color: #006847; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background: #006847; color: white; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    #logout-btn { background: #ce1126; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; }
+    #logout-btn:hover { background: #a00d1c; }
+    .highlight { background-color: yellow !important; }
   </style>
 </head>
 <body>
@@ -69,19 +31,12 @@
         <th colspan="3">Resultados Oficiales</th>
         <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
         <th>P6</th><th>P7</th><th>P8</th><th>P9</th><th>P10</th>
+        <th>Total</th>
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
+        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
+        <td></td>
       </tr>
       <tr>
         <th>Usuario</th>
@@ -93,7 +48,7 @@
       </tr>
     </thead>
     <tbody id="resultados-body">
-      <!-- Contenido dinámico -->
+      <!-- Aquí se agregan los resultados -->
     </tbody>
   </table>
 
@@ -105,11 +60,26 @@
   <script src="js/firebase-config.js"></script>
   <script>
     const db = firebase.firestore();
-    const tbody = document.querySelector("#resultados-body");
+    const tbody = document.getElementById("resultados-body");
+
+    // Función para obtener el nombre o correo del usuario usando where('uid', '==', userId)
+    async function obtenerNombreUsuario(userId) {
+      try {
+        const querySnapshot = await db.collection('users').where('uid', '==', userId).limit(1).get();
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          return userData.name || userData.email || 'Sin nombre';
+        } else {
+          return 'Desconocido';
+        }
+      } catch (error) {
+        console.error("Error obteniendo usuario:", error);
+        return 'Desconocido';
+      }
+    }
 
     async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-
+      // Obtener resultados oficiales de inputs
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
         const val = document.getElementById(`res-${i}`).value.toUpperCase();
@@ -117,20 +87,15 @@
       }
 
       tbody.innerHTML = '';
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+
       for (const doc of snapshot.docs) {
         const data = doc.data();
+        const userId = data.userId || data.uid; // Ajusta según cómo guardes el ID usuario
         const partidos = data.partidos || [];
 
-        let nombre = 'Desconocido';
-        try {
-          const userQuery = await db.collection('users').where('uid', '==', data.userId).limit(1).get();
-          if (!userQuery.empty) {
-            const userData = userQuery.docs[0].data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (err) {
-          console.error("Error al obtener usuario:", err);
-        }
+        // Obtener nombre o correo del usuario
+        const nombre = await obtenerNombreUsuario(userId);
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
@@ -141,10 +106,10 @@
 
         let total = 0;
         const tds = partidos.map((p, i) => {
-          const res = p.prediccion;
-          const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
+          const prediccion = p.prediccion || '-';
+          const coincide = resultadosOficiales[i + 1] && resultadosOficiales[i + 1] === prediccion;
           if (coincide) total++;
-          return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
+          return `<td class="${coincide ? 'highlight' : ''}">${prediccion}</td>`;
         });
 
         const fila = document.createElement('tr');
@@ -159,7 +124,6 @@
       }
     }
 
-    // Listeners a inputs para actualizar la tabla cuando se cambian resultados
     window.addEventListener('DOMContentLoaded', () => {
       cargarResultados();
       for (let i = 1; i <= 10; i++) {
