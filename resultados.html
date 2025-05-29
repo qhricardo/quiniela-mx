@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resultados | Quiniela MX</title>
   <style>
     body {
@@ -27,7 +27,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
       background-color: white;
     }
     th, td {
@@ -55,9 +55,17 @@
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       margin-bottom: 20px;
+      user-select: none;
     }
-    .formulario select {
-      margin: 5px;
+    select {
+      padding: 5px;
+      font-weight: bold;
+      width: 50px;
+      cursor: pointer;
+    }
+    .highlight-yellow {
+      background-color: #fff176 !important;
+      font-weight: bold;
     }
     button {
       background-color: #ce1126;
@@ -66,6 +74,7 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-left: 10px;
     }
     button:hover {
       background-color: #a50e1d;
@@ -81,27 +90,34 @@
 
   <h1>Resultados Registrados</h1>
 
-  <!-- Formulario para ingresar resultados -->
-  <form id="form-resultados" class="formulario">
-    <h3>Registrar Resultados Reales</h3>
-    <div style="display: flex; flex-wrap: wrap;">
-      <!-- 10 Selects para P1 a P10 -->
-      ${[...Array(10)].map((_, i) => `
-        <label for="P${i+1}" style="margin-right: 10px;">
-          P${i+1}
-          <select name="P${i+1}" required>
-            <option value="">-</option>
-            <option value="L">Gana Local</option>
-            <option value="E">Empate</option>
-            <option value="V">Gana Visitante</option>
-          </select>
-        </label>
-      `).join('')}
-    </div>
-    <button type="submit">Guardar Resultados</button>
-  </form>
+  <!-- Tabla para seleccionar resultados reales -->
+  <div class="formulario">
+    <strong>Seleccione resultados reales:</strong>
+    <table>
+      <thead>
+        <tr>
+          ${[...Array(10)].map((_, i) => `<th>P${i+1}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="resultados-selector-row">
+          ${[...Array(10)].map((_, i) => `
+            <td>
+              <select data-partido="${i+1}">
+                <option value="">-</option>
+                <option value="L">L</option>
+                <option value="E">E</option>
+                <option value="V">V</option>
+              </select>
+            </td>
+          `).join('')}
+        </tr>
+      </tbody>
+    </table>
+    <button id="guardar-resultados">Guardar Resultados</button>
+  </div>
 
-  <!-- Tabla de resultados -->
+  <!-- Tabla de pronósticos -->
   <table id="tabla-resultados">
     <thead>
       <tr>
@@ -124,14 +140,21 @@
   <script>
     const db = firebase.firestore();
 
-    let resultadosReales = {};
+    let resultadosReales = {}; // Guardará resultados en formato L/E/V
 
     // Mostrar nombre de usuario
     firebase.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        document.getElementById('usuario-actual').textContent = userDoc.exists ? userDoc.data().name : user.email;
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
       }
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      document.getElementById('usuario-actual').textContent = userDoc.exists ? userDoc.data().name : user.email;
+
+      // Cargar resultados guardados para llenar selects
+      cargarResultadosGuardados();
+      // Cargar pronósticos
+      cargarPronosticos();
     });
 
     // Cerrar sesión
@@ -139,38 +162,50 @@
       firebase.auth().signOut();
     });
 
-    // Guardar resultados reales
-    document.getElementById('form-resultados').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
+    // Guardar resultados en Firestore
+    document.getElementById('guardar-resultados').addEventListener('click', async () => {
+      const selects = document.querySelectorAll('#resultados-selector-row select');
       const nuevosResultados = {};
-      for (let i = 1; i <= 10; i++) {
-        const val = form[`P${i}`].value;
-        if (val) nuevosResultados[i] = val;
+      for (const sel of selects) {
+        const val = sel.value;
+        const partido = sel.getAttribute('data-partido');
+        if (val) nuevosResultados[partido] = val;
+      }
+      if (Object.keys(nuevosResultados).length < 10) {
+        alert('Debe seleccionar un resultado para todos los partidos.');
+        return;
       }
       try {
         await db.collection('resultados').doc('jornadaActual').set({
           resultados: nuevosResultados,
           fecha: firebase.firestore.FieldValue.serverTimestamp()
         });
-        alert('Resultados guardados.');
-        form.reset();
-        cargarResultados();
+        alert('Resultados guardados correctamente.');
+        resultadosReales = nuevosResultados;
+        cargarPronosticos(); // Actualiza colores y puntos
       } catch (error) {
-        console.error(error);
-        alert('Error al guardar resultados.');
+        console.error('Error guardando resultados:', error);
+        alert('Error guardando resultados, intente de nuevo.');
       }
     });
 
-    async function cargarResultados() {
-      const tabla = document.querySelector("#tabla-resultados tbody");
-      tabla.innerHTML = "";
-
-      // Obtener resultados reales
-      const resDoc = await db.collection('resultados').doc('jornadaActual').get();
-      if (resDoc.exists) {
-        resultadosReales = resDoc.data().resultados;
+    // Cargar resultados guardados y asignar valores a selects
+    async function cargarResultadosGuardados() {
+      const doc = await db.collection('resultados').doc('jornadaActual').get();
+      if (doc.exists) {
+        resultadosReales = doc.data().resultados || {};
+        // Asignar a selects
+        for (const [key, val] of Object.entries(resultadosReales)) {
+          const select = document.querySelector(`#resultados-selector-row select[data-partido="${key}"]`);
+          if (select) select.value = val;
+        }
       }
+    }
+
+    // Cargar pronósticos de todos los usuarios y mostrar tabla
+    async function cargarPronosticos() {
+      const tbody = document.querySelector('#tabla-resultados tbody');
+      tbody.innerHTML = '';
 
       const pronosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
@@ -189,16 +224,15 @@
         fila.appendChild(userTd);
 
         partidos.forEach((partido, index) => {
-          const pred = partido.prediccion;
+          const pred = partido.prediccion; // Aquí supongo que predicción ya es L, E o V
           const real = resultadosReales[index + 1];
-          const td = document.createElement('td');
 
+          const td = document.createElement('td');
           td.textContent = pred;
-          if (pred === real) {
-            td.classList.add('correct');
+
+          if (real && pred === real) {
+            td.classList.add('highlight-yellow');
             puntos += 3;
-          } else {
-            td.classList.add('incorrect');
           }
 
           fila.appendChild(td);
@@ -208,15 +242,14 @@
         puntosTd.textContent = puntos;
         puntosTd.classList.add('total');
         fila.appendChild(puntosTd);
-        tabla.appendChild(fila);
+
+        tbody.appendChild(fila);
       }
     }
-
-    // Cargar automáticamente
-    window.addEventListener('load', cargarResultados);
   </script>
 </body>
 </html>
+
 
 
 
