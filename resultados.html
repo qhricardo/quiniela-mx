@@ -2,132 +2,84 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resultados | Quiniela MX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resultados de Quiniela</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #f0f0f0;
+      margin: 0;
       padding: 20px;
     }
-    header {
-      background-color: #fff;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    h1, h2 {
+    h1 {
       text-align: center;
       color: #006847;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 20px;
       background-color: white;
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
     }
     th {
       background-color: #006847;
       color: white;
     }
-    tr.correct {
-      background-color: #e0ffe0;
-    }
-    tr.incorrect {
-      background-color: #ffe0e0;
-    }
-    .total {
-      font-weight: bold;
-      background-color: #eee;
-    }
-    .formulario {
-      background-color: white;
-      padding: 15px;
-      border-radius: 6px;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 10px 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      user-select: none;
     }
-    select {
-      padding: 5px;
-      font-weight: bold;
-      width: 50px;
-      cursor: pointer;
-    }
-    .highlight-yellow {
-      background-color: #fff176 !important;
-      font-weight: bold;
-    }
-    button {
+    #logout-btn {
       background-color: #ce1126;
       color: white;
-      padding: 8px 15px;
+      padding: 8px 12px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-left: 10px;
     }
-    button:hover {
-      background-color: #a50e1d;
+    #logout-btn:hover {
+      background-color: #a00d1c;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div><strong>Usuario:</strong> <span id="usuario-actual">Cargando...</span></div>
-    <button id="logout-btn">Cerrar sesión</button>
-  </header>
-
-  <h1>Resultados Registrados</h1>
-
-  <!-- Tabla para seleccionar resultados reales -->
-  <div class="formulario">
-    <strong>Seleccione resultados reales:</strong>
-    <table>
-      <thead>
-        <tr>
-          ${[...Array(10)].map((_, i) => `<th>P${i+1}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        <tr id="resultados-selector-row">
-          ${[...Array(10)].map((_, i) => `
-            <td>
-              <select data-partido="${i+1}">
-                <option value="">-</option>
-                <option value="L">L</option>
-                <option value="E">E</option>
-                <option value="V">V</option>
-              </select>
-            </td>
-          `).join('')}
-        </tr>
-      </tbody>
-    </table>
-    <button id="guardar-resultados">Guardar Resultados</button>
+  <div class="header">
+    <h2>Resultados de Todos los Usuarios</h2>
+    <button id="logout-btn">Cerrar Sesión</button>
   </div>
 
-  <!-- Tabla de pronósticos -->
-  <table id="tabla-resultados">
+  <h1>Pronósticos Registrados</h1>
+
+  <table id="resultados">
     <thead>
       <tr>
         <th>Usuario</th>
-        ${[...Array(10)].map((_, i) => `<th>P${i+1}</th>`).join('')}
-        <th>Puntos</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>P1</th>
+        <th>P2</th>
+        <th>P3</th>
+        <th>P4</th>
+        <th>P5</th>
+        <th>P6</th>
+        <th>P7</th>
+        <th>P8</th>
+        <th>P9</th>
+        <th>P10</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Contenido dinámico -->
+      <!-- Aquí se insertarán los resultados dinámicamente -->
     </tbody>
   </table>
 
@@ -135,121 +87,64 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
+    const tbody = document.querySelector("#resultados tbody");
 
-    let resultadosReales = {}; // Guardará resultados en formato L/E/V
+    async function cargarResultados() {
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
-    // Mostrar nombre de usuario
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-      const userDoc = await db.collection('users').doc(user.uid).get();
-      document.getElementById('usuario-actual').textContent = userDoc.exists ? userDoc.data().name : user.email;
-
-      // Cargar resultados guardados para llenar selects
-      cargarResultadosGuardados();
-      // Cargar pronósticos
-      cargarPronosticos();
-    });
-
-    // Cerrar sesión
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      firebase.auth().signOut();
-    });
-
-    // Guardar resultados en Firestore
-    document.getElementById('guardar-resultados').addEventListener('click', async () => {
-      const selects = document.querySelectorAll('#resultados-selector-row select');
-      const nuevosResultados = {};
-      for (const sel of selects) {
-        const val = sel.value;
-        const partido = sel.getAttribute('data-partido');
-        if (val) nuevosResultados[partido] = val;
-      }
-      if (Object.keys(nuevosResultados).length < 10) {
-        alert('Debe seleccionar un resultado para todos los partidos.');
-        return;
-      }
-      try {
-        await db.collection('resultados').doc('jornadaActual').set({
-          resultados: nuevosResultados,
-          fecha: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert('Resultados guardados correctamente.');
-        resultadosReales = nuevosResultados;
-        cargarPronosticos(); // Actualiza colores y puntos
-      } catch (error) {
-        console.error('Error guardando resultados:', error);
-        alert('Error guardando resultados, intente de nuevo.');
-      }
-    });
-
-    // Cargar resultados guardados y asignar valores a selects
-    async function cargarResultadosGuardados() {
-      const doc = await db.collection('resultados').doc('jornadaActual').get();
-      if (doc.exists) {
-        resultadosReales = doc.data().resultados || {};
-        // Asignar a selects
-        for (const [key, val] of Object.entries(resultadosReales)) {
-          const select = document.querySelector(`#resultados-selector-row select[data-partido="${key}"]`);
-          if (select) select.value = val;
-        }
-      }
-    }
-
-    // Cargar pronósticos de todos los usuarios y mostrar tabla
-    async function cargarPronosticos() {
-      const tbody = document.querySelector('#tabla-resultados tbody');
-      tbody.innerHTML = '';
-
-      const pronosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-
-      for (const doc of pronosSnapshot.docs) {
+      for (const doc of snapshot.docs) {
         const data = doc.data();
         const userId = data.userId;
-        const partidos = data.partidos;
+        const partidos = data.partidos || [];
 
-        const userDoc = await db.collection('users').doc(userId).get();
-        const username = userDoc.exists ? userDoc.data().name : "Usuario desconocido";
-
-        let puntos = 0;
-        const fila = document.createElement('tr');
-        const userTd = document.createElement('td');
-        userTd.textContent = username;
-        fila.appendChild(userTd);
-
-        partidos.forEach((partido, index) => {
-          const pred = partido.prediccion; // Aquí supongo que predicción ya es L, E o V
-          const real = resultadosReales[index + 1];
-
-          const td = document.createElement('td');
-          td.textContent = pred;
-
-          if (real && pred === real) {
-            td.classList.add('highlight-yellow');
-            puntos += 3;
+        // Obtener usuario
+        let nombre = 'Desconocido';
+        try {
+          const userDoc = await db.collection('users').doc(userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            nombre = userData.name || userData.email || 'Sin nombre';
           }
+        } catch (err) {
+          console.error("Error al obtener usuario:", err);
+        }
 
-          fila.appendChild(td);
-        });
+        // Convertir fecha
+        let fechaTexto = '', horaTexto = '';
+        if (data.fecha && typeof data.fecha.toDate === 'function') {
+          const fechaObj = data.fecha.toDate();
+          fechaTexto = fechaObj.toLocaleDateString();
+          horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
-        const puntosTd = document.createElement('td');
-        puntosTd.textContent = puntos;
-        puntosTd.classList.add('total');
-        fila.appendChild(puntosTd);
-
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${nombre}</td>
+          <td>${fechaTexto}</td>
+          <td>${horaTexto}</td>
+          ${[...Array(10)].map((_, i) => `<td>${partidos[i]?.prediccion || '-'}</td>`).join('')}
+        `;
         tbody.appendChild(fila);
       }
     }
+
+    // Cerrar sesión
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    });
+
+    // Cargar resultados
+    window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
 </body>
 </html>
-
-
 
 
