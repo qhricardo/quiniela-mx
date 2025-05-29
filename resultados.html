@@ -1,42 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Resultados Quiniela</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resultados de Quiniela</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
+      background-color: #f0f0f0;
       margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #006847;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 20px;
     }
     h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 20px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      color: #006847;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      background-color: white;
     }
     th, td {
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
     }
@@ -44,113 +30,121 @@
       background-color: #006847;
       color: white;
     }
-    .logout-btn {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 10px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #logout-btn {
       background-color: #ce1126;
       color: white;
-      padding: 8px 15px;
+      padding: 8px 12px;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
     }
-    .logout-btn:hover {
-      background-color: #a00d20;
+    #logout-btn:hover {
+      background-color: #a00d1c;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Resultados de Quiniela</h1>
-    <button class="logout-btn" id="logout-btn">Cerrar Sesión</button>
-  </header>
-
-  <div class="container">
-    <table id="results-table">
-      <thead>
-        <tr>
-          <th>Usuario</th>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>P1</th>
-          <th>P2</th>
-          <th>P3</th>
-          <th>P4</th>
-          <th>P5</th>
-          <th>P6</th>
-          <th>P7</th>
-          <th>P8</th>
-          <th>P9</th>
-          <th>P10</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Filas generadas con JavaScript -->
-      </tbody>
-    </table>
+  <div class="header">
+    <h2>Resultados de Todos los Usuarios</h2>
+    <button id="logout-btn">Cerrar Sesión</button>
   </div>
+
+  <h1>Pronósticos Registrados</h1>
+
+  <table id="resultados">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>P1</th>
+        <th>P2</th>
+        <th>P3</th>
+        <th>P4</th>
+        <th>P5</th>
+        <th>P6</th>
+        <th>P7</th>
+        <th>P8</th>
+        <th>P9</th>
+        <th>P10</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Aquí se insertarán los resultados dinámicamente -->
+    </tbody>
+  </table>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
-    const auth = firebase.auth();
     const db = firebase.firestore();
+    const tbody = document.querySelector("#resultados tbody");
 
-    const tbody = document.querySelector('#results-table tbody');
-
-    // Cerrar sesión
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      auth.signOut().then(() => {
-        window.location.href = 'login.html';
-      });
-    });
-
-    // Cargar resultados de todos los usuarios
     async function cargarResultados() {
-      const pronosticosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-      
-      for (const doc of pronosticosSnapshot.docs) {
-        const datos = doc.data();
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
-        // Obtener nombre de usuario
-        let nombreUsuario = 'Desconocido';
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const userId = data.userId;
+        const partidos = data.partidos || [];
+
+        // Obtener usuario
+        let nombre = 'Desconocido';
         try {
-          const userDoc = await db.collection('users').doc(datos.userId).get();
+          const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
-            nombreUsuario = userDoc.data().name || userDoc.data().email || 'Sin nombre';
+            const userData = userDoc.data();
+            nombre = userData.name || userData.email || 'Sin nombre';
           }
         } catch (err) {
           console.error("Error al obtener usuario:", err);
         }
 
-        const fecha = new Date(datos.fecha.toDate ? datos.fecha.toDate() : datos.fecha);
-        const fechaTexto = fecha.toLocaleDateString();
-        const horaTexto = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // Convertir fecha
+        let fechaTexto = '', horaTexto = '';
+        if (data.fecha && typeof data.fecha.toDate === 'function') {
+          const fechaObj = data.fecha.toDate();
+          fechaTexto = fechaObj.toLocaleDateString();
+          horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
         const fila = document.createElement('tr');
         fila.innerHTML = `
-          <td>${nombreUsuario}</td>
+          <td>${nombre}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
-          ${datos.partidos.map(p => `<td>${p.prediccion}</td>`).join('')}
+          ${[...Array(10)].map((_, i) => `<td>${partidos[i]?.prediccion || '-'}</td>`).join('')}
         `;
         tbody.appendChild(fila);
       }
     }
 
-    // Iniciar
-    auth.onAuthStateChanged(user => {
-      if (!user) {
+    // Cerrar sesión
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
-      } else {
-        cargarResultados();
-      }
+      });
     });
+
+    // Cargar resultados
+    window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
 </body>
 </html>
+
 
