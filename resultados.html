@@ -30,18 +30,6 @@
       background-color: #006847;
       color: white;
     }
-    .resultados-manual input {
-      width: 30px;
-      text-align: center;
-      font-weight: bold;
-      font-size: 16px;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-    .highlight-yellow {
-      background-color: #fff176 !important;
-      font-weight: bold;
-    }
     .header {
       display: flex;
       justify-content: space-between;
@@ -49,7 +37,6 @@
       background: white;
       padding: 10px 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 10px;
     }
     #logout-btn {
       background-color: #ce1126;
@@ -61,6 +48,15 @@
     }
     #logout-btn:hover {
       background-color: #a00d1c;
+    }
+    .acierto {
+      background-color: yellow;
+      font-weight: bold;
+    }
+    input.resultado-input {
+      width: 30px;
+      text-transform: uppercase;
+      text-align: center;
     }
   </style>
 </head>
@@ -74,25 +70,30 @@
   <h1>Pronósticos Registrados</h1>
 
   <!-- Tabla para ingresar resultados manuales -->
-  <table id="tabla-manual">
+  <table>
     <thead>
       <tr>
+        <th></th>
+        <th>P1</th>
+        <th>P2</th>
+        <th>P3</th>
+        <th>P4</th>
+        <th>P5</th>
+        <th>P6</th>
+        <th>P7</th>
+        <th>P8</th>
+        <th>P9</th>
+        <th>P10</th>
+        <th>Total</th>
+      </tr>
+      <tr>
         <th>Resultados</th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="1" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="2" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="3" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="4" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="5" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="6" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="7" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="8" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="9" title="Ingrese L, E o V" /></th>
-        <th class="resultados-manual"><input type="text" maxlength="1" data-partido="10" title="Ingrese L, E o V" /></th>
+        ${[...Array(10)].map((_, i) => `<th><input class="resultado-input" maxlength="1" data-partido="${i}" /></th>`).join('')}
+        <th></th>
       </tr>
     </thead>
   </table>
 
-  <!-- Tabla de resultados existentes -->
   <table id="resultados">
     <thead>
       <tr>
@@ -109,34 +110,35 @@
         <th>P8</th>
         <th>P9</th>
         <th>P10</th>
+        <th>Total</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Aquí se insertarán los resultados dinámicamente -->
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  
-  <!-- Configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados tbody");
-    let resultadosManuales = {};
+    const resultadoInputs = document.querySelectorAll(".resultado-input");
 
-    // Función para validar L, E o V
-    function esValido(valor) {
-      return ['L', 'E', 'V'].includes(valor.toUpperCase());
-    }
+    let resultadosReales = Array(10).fill("");
 
-    // Cargar resultados de pronósticos y mostrar tabla
+    resultadoInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        const index = parseInt(input.dataset.partido);
+        resultadosReales[index] = input.value.toUpperCase().trim();
+        actualizarColores();
+      });
+    });
+
     async function cargarResultados() {
-      tbody.innerHTML = '';
+      tbody.innerHTML = ""; // Limpiar tabla
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
       for (const doc of snapshot.docs) {
@@ -156,7 +158,7 @@
           console.error("Error al obtener usuario:", err);
         }
 
-        // Convertir fecha y hora
+        // Convertir fecha
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
           const fechaObj = data.fecha.toDate();
@@ -164,42 +166,40 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
+        // Crear fila
         const fila = document.createElement('tr');
         fila.innerHTML = `
           <td>${nombre}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
-          ${[...Array(10)].map((_, i) => {
-            const pred = partidos[i]?.prediccion || '-';
-            // Aquí revisamos si coincide con el resultado manual y marcamos la celda:
-            const partidoIndex = i + 1;
-            const coincide = resultadosManuales[partidoIndex] && resultadosManuales[partidoIndex].toUpperCase() === pred.toUpperCase();
-            return `<td class="${coincide ? 'highlight-yellow' : ''}">${pred}</td>`;
-          }).join('')}
+          ${[...Array(10)].map((_, i) => `<td data-index="${i}">${partidos[i]?.prediccion || '-'}</td>`).join('')}
+          <td class="aciertos">0</td>
         `;
         tbody.appendChild(fila);
       }
     }
 
-    // Actualizar resultados manuales y recargar tabla para marcar aciertos
-    document.querySelectorAll('#tabla-manual input').forEach(input => {
-      input.addEventListener('input', () => {
-        const partido = input.getAttribute('data-partido');
-        const valor = input.value.toUpperCase();
+    function actualizarColores() {
+      const filas = tbody.querySelectorAll("tr");
+      filas.forEach(fila => {
+        let aciertos = 0;
+        for (let i = 0; i < 10; i++) {
+          const celda = fila.querySelector(`td[data-index="${i}"]`);
+          if (!celda) continue;
 
-        if (valor === '') {
-          delete resultadosManuales[partido];
-        } else if (esValido(valor)) {
-          resultadosManuales[partido] = valor;
-        } else {
-          // Valor no válido, limpiar
-          input.value = '';
-          delete resultadosManuales[partido];
+          const prediccion = celda.textContent.trim().toUpperCase();
+          const resultado = resultadosReales[i];
+
+          if (resultado && prediccion === resultado) {
+            celda.classList.add("acierto");
+            aciertos++;
+          } else {
+            celda.classList.remove("acierto");
+          }
         }
-
-        cargarResultados();
+        fila.querySelector(".aciertos").textContent = aciertos;
       });
-    });
+    }
 
     // Cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
@@ -208,10 +208,9 @@
       });
     });
 
-    // Al cargar la página, cargar resultados
+    // Cargar datos al iniciar
     window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
-
 </body>
 </html>
 
