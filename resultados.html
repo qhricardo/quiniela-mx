@@ -1,163 +1,156 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resultados de Todos los Usuarios</title>
+  <meta charset="UTF-8">
+  <title>Resultados Quiniela</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 20px;
-      background-color: #f5f5f5;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #006847;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     h1 {
-      text-align: center;
-      color: #006847;
+      margin: 0;
+      font-size: 24px;
     }
-    .resultado {
-      background: white;
-      margin-bottom: 30px;
-      padding: 15px;
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: white;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .resultado h2 {
-      margin-bottom: 5px;
-      color: #003366;
-    }
-    .resultado p.fecha {
-      color: gray;
-      font-size: 14px;
-      margin-top: 0;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
+      margin-top: 20px;
     }
     th, td {
-      border-bottom: 1px solid #ddd;
+      border: 1px solid #ddd;
       padding: 10px;
-      text-align: left;
+      text-align: center;
     }
     th {
       background-color: #006847;
       color: white;
     }
-    .correcto {
-      background-color: #e8f5e9;
+    .logout-btn {
+      background-color: #ce1126;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
     }
-    .incorrecto {
-      background-color: #ffebee;
+    .logout-btn:hover {
+      background-color: #a00d20;
     }
   </style>
 </head>
 <body>
 
-  <h1>Resultados de Todos los Usuarios</h1>
-  <div id="resultados-container">Cargando resultados...</div>
+  <header>
+    <h1>Resultados de Quiniela</h1>
+    <button class="logout-btn" id="logout-btn">Cerrar Sesión</button>
+  </header>
+
+  <div class="container">
+    <table id="results-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>P1</th>
+          <th>P2</th>
+          <th>P3</th>
+          <th>P4</th>
+          <th>P5</th>
+          <th>P6</th>
+          <th>P7</th>
+          <th>P8</th>
+          <th>P9</th>
+          <th>P10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Filas generadas con JavaScript -->
+      </tbody>
+    </table>
+  </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-
-  <!-- Configuración personalizada -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-config.js"></script>
 
   <script>
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const resultadosReales = {
-      1: "X",
-      2: "1",
-      3: "2",
-      4: "1",
-      5: "X",
-      6: "2",
-      7: "1",
-      8: "X",
-      9: "2",
-      10: "1"
-    };
+    const tbody = document.querySelector('#results-table tbody');
 
-    function formatPrediccion(valor) {
-      return {
-        '1': 'Gana Local',
-        'X': 'Empate',
-        '2': 'Gana Visitante'
-      }[valor] || valor;
-    }
+    // Cerrar sesión
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    });
 
+    // Cargar resultados de todos los usuarios
     async function cargarResultados() {
-      const container = document.getElementById('resultados-container');
-      container.innerHTML = '';
+      const pronosticosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+      
+      for (const doc of pronosticosSnapshot.docs) {
+        const datos = doc.data();
 
-      const pronosticosSnapshot = await db.collection("pronosticos")
-        .orderBy("fecha", "desc")
-        .get();
+        // Obtener nombre de usuario
+        let nombreUsuario = 'Desconocido';
+        try {
+          const userDoc = await db.collection('users').doc(datos.userId).get();
+          if (userDoc.exists) {
+            nombreUsuario = userDoc.data().name || userDoc.data().email || 'Sin nombre';
+          }
+        } catch (err) {
+          console.error("Error al obtener usuario:", err);
+        }
 
-      const usersMap = {};
-      const usersSnapshot = await db.collection("users").get();
-      usersSnapshot.forEach(doc => {
-        usersMap[doc.id] = doc.data().name;
-      });
+        const fecha = new Date(datos.fecha.toDate ? datos.fecha.toDate() : datos.fecha);
+        const fechaTexto = fecha.toLocaleDateString();
+        const horaTexto = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      pronosticosSnapshot.forEach(doc => {
-        const data = doc.data();
-        const partidos = data.partidos || [];
-        const nombreUsuario = usersMap[data.userId] || data.userId;
-        const fecha = data.fecha?.toDate().toLocaleString() || 'Fecha desconocida';
-
-        const div = document.createElement('div');
-        div.className = 'resultado';
-        div.innerHTML = `
-          <h2>${nombreUsuario}</h2>
-          <p class="fecha">Fecha: ${fecha}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Partido</th>
-                <th>Pronóstico</th>
-                <th>Resultado Real</th>
-                <th>Puntos</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${partidos.map((p, i) => {
-                const real = resultadosReales[i + 1];
-                const correcto = real === p.prediccion;
-                const clase = correcto ? 'correcto' : 'incorrecto';
-                return `
-                  <tr class="${clase}">
-                    <td>${p.local} vs ${p.visitante}</td>
-                    <td>${formatPrediccion(p.prediccion)}</td>
-                    <td>${formatPrediccion(real)}</td>
-                    <td>${correcto ? 3 : 0}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${nombreUsuario}</td>
+          <td>${fechaTexto}</td>
+          <td>${horaTexto}</td>
+          ${datos.partidos.map(p => `<td>${p.prediccion}</td>`).join('')}
         `;
-        container.appendChild(div);
-      });
-
-      if (pronosticosSnapshot.empty) {
-        container.innerHTML = "<p>No hay pronósticos registrados aún.</p>";
+        tbody.appendChild(fila);
       }
     }
 
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        cargarResultados();
+    // Iniciar
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html';
       } else {
-        // Si quieres mostrar aún sin sesión, puedes quitar esto.
         cargarResultados();
       }
     });
   </script>
 </body>
 </html>
+
