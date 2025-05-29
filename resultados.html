@@ -8,36 +8,77 @@
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
+      padding: 0;
+      margin: 0;
+    }
+
+    header {
+      background-color: #006847;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    #logout-btn {
+      background-color: #ce1126;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #logout-btn:hover {
+      background-color: #a00d20;
+    }
+
+    main {
       padding: 20px;
     }
-    h1 {
+
+    h2 {
       text-align: center;
       color: #006847;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 30px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
       font-size: 14px;
     }
+
     th {
       background-color: #006847;
       color: white;
     }
+
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
     .correcto {
       background-color: #d4edda;
     }
+
     .incorrecto {
       background-color: #f8d7da;
     }
+
     .total {
       font-weight: bold;
     }
@@ -45,93 +86,109 @@
 </head>
 <body>
 
-<h1>Historial de Pronósticos por Usuario</h1>
-<table id="tabla-resultados">
-  <!-- La tabla se llenará con JavaScript -->
-</table>
+  <header>
+    <h1>Quiniela MX - Resultados</h1>
+    <button id="logout-btn">Cerrar sesión</button>
+  </header>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <main>
+    <h2>Historial de Pronósticos por Usuario</h2>
+    <table id="tabla-resultados">
+      <!-- Tabla generada con JavaScript -->
+    </table>
+  </main>
 
-<!-- Configuración de Firebase -->
-<script src="js/firebase-config.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-<script>
-  const db = firebase.firestore();
+  <!-- Configuración de Firebase -->
+  <script src="js/firebase-config.js"></script>
 
-  const resultadosReales = {
-    1: "X", 2: "1", 3: "2", 4: "1", 5: "X",
-    6: "2", 7: "1", 8: "X", 9: "2", 10: "1"
-  };
+  <script>
+    const db = firebase.firestore();
 
-  function formato(pred) {
-    const mapa = { "1": "L", "X": "E", "2": "V" };
-    return mapa[pred] || "-";
-  }
+    const resultadosReales = {
+      1: "X", 2: "1", 3: "2", 4: "1", 5: "X",
+      6: "2", 7: "1", 8: "X", 9: "2", 10: "1"
+    };
 
-  function formatearFecha(fecha) {
-    const opciones = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return fecha.toLocaleDateString('es-MX', opciones);
-  }
-
-  function formatearHora(fecha) {
-    const opciones = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    return fecha.toLocaleTimeString('es-MX', opciones);
-  }
-
-  async function obtenerNombre(uid) {
-    const doc = await db.collection("users").doc(uid).get();
-    if (doc.exists) {
-      const d = doc.data();
-      return d.name || d.email || uid;
+    function formato(pred) {
+      const mapa = { "1": "L", "X": "E", "2": "V" };
+      return mapa[pred] || "-";
     }
-    return uid;
-  }
 
-  async function mostrarResultados() {
-    const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
-
-    const tabla = document.getElementById("tabla-resultados");
-    let header = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
-    for (let i = 1; i <= 10; i++) {
-      header += `<th>P${i}</th>`;
+    function formatearFecha(fecha) {
+      const opciones = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return fecha.toLocaleDateString('es-MX', opciones);
     }
-    header += `<th>Total</th></tr>`;
-    tabla.innerHTML = header;
 
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const nombre = await obtenerNombre(data.userId);
-      const fechaObj = data.fecha.toDate();
-      const fechaStr = formatearFecha(fechaObj);
-      const horaStr = formatearHora(fechaObj);
-      let fila = `<tr><td>${nombre}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
-      let total = 0;
+    function formatearHora(fecha) {
+      const opciones = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      return fecha.toLocaleTimeString('es-MX', opciones);
+    }
 
-      for (let i = 0; i < 10; i++) {
-        const partido = data.partidos[i];
-        const pred = partido?.prediccion || "-";
-        const real = resultadosReales[i + 1];
-        const correcto = pred === real;
-        const clase = correcto ? 'correcto' : 'incorrecto';
-        total += correcto ? 3 : 0;
-        fila += `<td class="${clase}">${formato(pred)}</td>`;
+    async function obtenerNombre(uid) {
+      const doc = await db.collection("users").doc(uid).get();
+      if (doc.exists) {
+        const d = doc.data();
+        return d.name || d.email || uid;
       }
-
-      fila += `<td class="total">${total}</td></tr>`;
-      tabla.innerHTML += fila;
+      return uid;
     }
-  }
 
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      mostrarResultados();
-    } else {
-      window.location.href = "login.html";
+    async function mostrarResultados() {
+      const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
+
+      const tabla = document.getElementById("tabla-resultados");
+      let header = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
+      for (let i = 1; i <= 10; i++) {
+        header += `<th>P${i}</th>`;
+      }
+      header += `<th>Total</th></tr>`;
+      tabla.innerHTML = header;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const nombre = await obtenerNombre(data.userId);
+        const fechaObj = data.fecha.toDate();
+        const fechaStr = formatearFecha(fechaObj);
+        const horaStr = formatearHora(fechaObj);
+        let fila = `<tr><td>${nombre}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
+        let total = 0;
+
+        for (let i = 0; i < 10; i++) {
+          const partido = data.partidos[i];
+          const pred = partido?.prediccion || "-";
+          const real = resultadosReales[i + 1];
+          const correcto = pred === real;
+          const clase = correcto ? 'correcto' : 'incorrecto';
+          total += correcto ? 3 : 0;
+          fila += `<td class="${clase}">${formato(pred)}</td>`;
+        }
+
+        fila += `<td class="total">${total}</td></tr>`;
+        tabla.innerHTML += fila;
+      }
     }
-  });
-</script>
+
+    // Autenticación
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        mostrarResultados();
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+
 </body>
 </html>
