@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Captura de Pronósticos</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Captura de Pronósticos - Quiniela MX</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,6 +14,7 @@
     }
     h2 {
       color: #006847;
+      text-align: center;
     }
     form {
       background: #fff;
@@ -21,24 +22,37 @@
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    label {
-      display: block;
+    .partido {
       margin-top: 15px;
-      font-weight: bold;
     }
-    select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
+    .partido label.partido-titulo {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .opciones label {
+      margin-right: 20px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+    }
+    .opciones input[type="radio"] {
+      margin-right: 6px;
+      cursor: pointer;
     }
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
+      margin-top: 25px;
+      padding: 12px 25px;
       background-color: #006847;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 5px;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+      display: block;
+      width: 100%;
     }
     button:hover {
       background-color: #004d33;
@@ -57,11 +71,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <!-- Tu configuración -->
+  <!-- Tu configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
+
     const partidos = [
       { local: "América", visitante: "Guadalajara" },
       { local: "Cruz Azul", visitante: "Monterrey" },
@@ -77,39 +92,54 @@
 
     const container = document.getElementById('partidos-container');
 
-    // Generar formulario dinámico
+    // Generar formulario con botones radio para cada partido
     partidos.forEach((partido, index) => {
-      const label = document.createElement('label');
-      label.textContent = `${index + 1}. ${partido.local} vs ${partido.visitante}`;
+      const divPartido = document.createElement('div');
+      divPartido.className = "partido";
 
-      const select = document.createElement('select');
-      select.name = `prediccion-${index}`;
-      select.required = true;
+      const labelTitulo = document.createElement('label');
+      labelTitulo.className = 'partido-titulo';
+      labelTitulo.textContent = `${index + 1}. ${partido.local} vs ${partido.visitante}`;
 
-      ["", "1", "X", "2"].forEach(value => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value === "" ? "-- Selecciona --" :
-                            value === "1" ? "Gana Local" :
-                            value === "X" ? "Empate" : "Gana Visitante";
-        select.appendChild(option);
+      const opcionesDiv = document.createElement('div');
+      opcionesDiv.className = 'opciones';
+
+      ["1", "X", "2"].forEach(value => {
+        const label = document.createElement('label');
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `prediccion-${index}`;
+        radio.value = value;
+        radio.required = true;
+
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(
+          value === "1" ? "Gana Local" :
+          value === "X" ? "Empate" :
+          "Gana Visitante"
+        ));
+
+        opcionesDiv.appendChild(label);
       });
 
-      container.appendChild(label);
-      container.appendChild(select);
+      divPartido.appendChild(labelTitulo);
+      divPartido.appendChild(opcionesDiv);
+      container.appendChild(divPartido);
     });
 
-    // Guardar pronósticos
+    // Guardar pronósticos en Firestore
     document.getElementById('pronosticos-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+
       const user = firebase.auth().currentUser;
       if (!user) {
-        alert("Debes iniciar sesión primero.");
+        alert("Debes iniciar sesión para guardar tus pronósticos.");
         return;
       }
 
       const partidosData = partidos.map((partido, index) => {
-        const prediccion = document.querySelector(`select[name="prediccion-${index}"]`).value;
+        const prediccion = document.querySelector(`input[name="prediccion-${index}"]:checked`).value;
         return {
           local: partido.local,
           visitante: partido.visitante,
@@ -123,11 +153,12 @@
           fecha: firebase.firestore.FieldValue.serverTimestamp(),
           partidos: partidosData
         });
+
         alert("Pronósticos guardados correctamente.");
         document.getElementById('pronosticos-form').reset();
       } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("Hubo un error al guardar los pronósticos.");
+        console.error("Error al guardar pronósticos:", error);
+        alert("Hubo un error al guardar los pronósticos. Intenta nuevamente.");
       }
     });
   </script>
