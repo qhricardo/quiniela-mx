@@ -3,147 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resultados de Pronósticos</title>
+  <title>Resultados de Quiniela</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #006847;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    #logout-btn {
-      background-color: #ce1126;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #logout-btn:hover {
-      background-color: #a00d20;
-    }
-
-    main {
       padding: 20px;
     }
-
-    h2 {
+    h1 {
       text-align: center;
       color: #006847;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 20px;
+      background: white;
     }
-
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
       text-align: center;
-      font-size: 14px;
     }
-
     th {
       background-color: #006847;
       color: white;
     }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
     .correcto {
       background-color: #d4edda;
     }
-
     .incorrecto {
       background-color: #f8d7da;
     }
-
     .total {
       font-weight: bold;
+    }
+    #logout-btn {
+      background: #ce1126;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
-  <header>
-    <h1>Quiniela MX - Resultados Generales</h1>
-    <button id="logout-btn">Cerrar sesión</button>
-  </header>
-
-  <main>
-    <h2>Pronósticos por Usuario</h2>
-    <table id="tabla-resultados">
-      <!-- Tabla generada dinámicamente -->
-    </table>
-  </main>
+  <button id="logout-btn">Cerrar Sesión</button>
+  <h1>Resultados de Quiniela</h1>
+  <table id="tabla-resultados"></table>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <!-- Tu configuración de Firebase -->
+  <!-- Tu configuración -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const resultadosReales = {
       1: "X", 2: "1", 3: "2", 4: "1", 5: "X",
       6: "2", 7: "1", 8: "X", 9: "2", 10: "1"
     };
 
-    function formato(pred) {
-      const mapa = { "1": "L", "X": "E", "2": "V" };
-      return mapa[pred] || "-";
-    }
-
-    function formatearFecha(fecha) {
-      return fecha.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
-    }
-
-    function formatearHora(fecha) {
-      return fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    }
-
     async function obtenerNombre(uid) {
       const doc = await db.collection("users").doc(uid).get();
-      if (doc.exists) {
-        const data = doc.data();
-        return data.name || data.email || uid;
-      }
-      return uid;
+      return doc.exists ? doc.data().name || "Usuario" : "Desconocido";
+    }
+
+    function formato(prediccion) {
+      return { "1": "Gana Local", "X": "Empate", "2": "Gana Visitante" }[prediccion] || "-";
+    }
+
+    function formatearFecha(date) {
+      return date.toLocaleDateString("es-MX");
+    }
+
+    function formatearHora(date) {
+      return date.toLocaleTimeString("es-MX", { hour: '2-digit', minute: '2-digit' });
     }
 
     async function mostrarResultados() {
       const tabla = document.getElementById("tabla-resultados");
+      tabla.innerHTML = "";
+
       let encabezado = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
       for (let i = 1; i <= 10; i++) {
         encabezado += `<th>P${i}</th>`;
       }
       encabezado += `<th>Total</th></tr>`;
-      tabla.innerHTML = encabezado;
+      tabla.innerHTML += encabezado;
 
       const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
 
@@ -172,18 +127,16 @@
       }
     }
 
-    // Autenticación y ejecución
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        mostrarResultados();
-      } else {
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
         window.location.href = "login.html";
+      } else {
+        mostrarResultados();
       }
     });
 
-    // Botón cerrar sesión
     document.getElementById("logout-btn").addEventListener("click", () => {
-      firebase.auth().signOut().then(() => {
+      auth.signOut().then(() => {
         window.location.href = "login.html";
       });
     });
