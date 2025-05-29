@@ -2,14 +2,23 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resultados de Quiniela</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resultados | Quiniela MX</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
+      background-color: #f7f7f7;
       padding: 20px;
+    }
+    header {
+      background-color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
@@ -18,133 +27,200 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
       background-color: white;
+      user-select: none;
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
+      font-weight: normal;
     }
     th {
       background-color: #006847;
       color: white;
+      font-weight: bold;
     }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: white;
-      padding: 10px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    td.resultados-manual input {
+      width: 30px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      text-transform: uppercase;
+      cursor: pointer;
     }
-    #logout-btn {
+    .highlight-yellow {
+      background-color: #fff176 !important;
+      font-weight: bold;
+    }
+    td.total-cell {
+      font-weight: bold;
+      background-color: #eee;
+    }
+    button {
       background-color: #ce1126;
       color: white;
-      padding: 8px 12px;
+      padding: 8px 15px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-left: 10px;
     }
-    #logout-btn:hover {
-      background-color: #a00d1c;
+    button:hover {
+      background-color: #a50e1d;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h2>Resultados de Todos los Usuarios</h2>
-    <button id="logout-btn">Cerrar Sesión</button>
-  </div>
+<header>
+  <div><strong>Usuario:</strong> <span id="usuario-actual">Cargando...</span></div>
+  <button id="logout-btn">Cerrar sesión</button>
+</header>
 
-  <h1>Pronósticos Registrados</h1>
+<h1>Resultados Registrados</h1>
 
-  <table id="resultados">
-    <thead>
-      <tr>
-        <th>Usuario</th>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Aquí se insertarán los resultados dinámicamente -->
-    </tbody>
-  </table>
+<table id="tabla-resultados">
+  <thead>
+    <tr id="fila-resultados-manual">
+      <th>Resultados</th>
+      <!-- Aquí van inputs para P1 a P10 -->
+      ${[...Array(10)].map((_, i) => `<th class="resultados-manual"><input type="text" maxlength="1" data-partido="${i+1}" title="Ingrese L, E o V" /></th>`).join('')}
+      <th class="total-cell">Total</th>
+    </tr>
+    <tr>
+      <th>Usuario</th>
+      ${[...Array(10)].map((_, i) => `<th>P${i+1}</th>`).join('')}
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Pronósticos dinámicos -->
+  </tbody>
+</table>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  
-  <!-- Configuración Firebase -->
-  <script src="js/firebase-config.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
 
-  <script>
-    const db = firebase.firestore();
-    const tbody = document.querySelector("#resultados tbody");
+<script>
+  const db = firebase.firestore();
+  let resultadosManuales = {}; // Guardará los resultados ingresados manualmente en formato L/E/V
 
-    async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const userId = data.userId;
-        const partidos = data.partidos || [];
-
-        // Obtener usuario
-        let nombre = 'Desconocido';
-        try {
-          const userDoc = await db.collection('users').doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (err) {
-          console.error("Error al obtener usuario:", err);
-        }
-
-        // Convertir fecha
-        let fechaTexto = '', horaTexto = '';
-        if (data.fecha && typeof data.fecha.toDate === 'function') {
-          const fechaObj = data.fecha.toDate();
-          fechaTexto = fechaObj.toLocaleDateString();
-          horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${nombre}</td>
-          <td>${fechaTexto}</td>
-          <td>${horaTexto}</td>
-          ${[...Array(10)].map((_, i) => `<td>${partidos[i]?.prediccion || '-'}</td>`).join('')}
-        `;
-        tbody.appendChild(fila);
-      }
+  // Mostrar nombre usuario y cargar pronósticos al iniciar sesión
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
     }
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    document.getElementById('usuario-actual').textContent = userDoc.exists ? userDoc.data().name : user.email;
 
-    // Cerrar sesión
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      firebase.auth().signOut().then(() => {
-        window.location.href = 'login.html';
-      });
+    cargarPronosticos();
+  });
+
+  // Cerrar sesión
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    firebase.auth().signOut();
+  });
+
+  // Función para validar entrada válida (L, E, V)
+  function esValido(valor) {
+    return ['L', 'E', 'V'].includes(valor.toUpperCase());
+  }
+
+  // Evento para inputs de resultados manuales
+  document.querySelectorAll('#fila-resultados-manual input').forEach(input => {
+    input.addEventListener('input', () => {
+      const partido = input.getAttribute('data-partido');
+      let val = input.value.toUpperCase();
+      if (!esValido(val) && val !== '') {
+        // Si no es válido y no está vacío, limpiar input
+        input.value = '';
+        resultadosManuales[partido] = null;
+      } else {
+        resultadosManuales[partido] = val || null;
+      }
+      actualizarColoresYpuntajes();
     });
+  });
 
-    // Cargar resultados
-    window.addEventListener('DOMContentLoaded', cargarResultados);
-  </script>
+  // Cargar pronósticos y mostrar tabla
+  async function cargarPronosticos() {
+    const tbody = document.querySelector('#tabla-resultados tbody');
+    tbody.innerHTML = '';
+
+    const pronosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+
+    for (const doc of pronosSnapshot.docs) {
+      const data = doc.data();
+      const userId = data.userId;
+      const partidos = data.partidos; // Supuesto: arreglo [{ prediccion: 'L'|'E'|'V' }, ...]
+      
+      const userDoc = await db.collection('users').doc(userId).get();
+      const username = userDoc.exists ? userDoc.data().name : "Usuario desconocido";
+
+      let puntos = 0;
+      const fila = document.createElement('tr');
+      const userTd = document.createElement('td');
+      userTd.textContent = username;
+      fila.appendChild(userTd);
+
+      partidos.forEach((partido, index) => {
+        const pred = partido.prediccion.toUpperCase();
+        const real = resultadosManuales[index + 1]; // Resultado manual
+
+        const td = document.createElement('td');
+        td.textContent = pred;
+
+        // Resaltar si coincide con resultado manual
+        if (real && pred === real) {
+          td.classList.add('highlight-yellow');
+          puntos += 3;
+        }
+
+        fila.appendChild(td);
+      });
+
+      const puntosTd = document.createElement('td');
+      puntosTd.textContent = puntos;
+      puntosTd.classList.add('total-cell');
+      fila.appendChild(puntosTd);
+
+      tbody.appendChild(fila);
+    }
+  }
+
+  // Función para actualizar colores y puntos al cambiar resultados manuales
+  function actualizarColoresYpuntajes() {
+    const tbody = document.querySelector('#tabla-resultados tbody');
+    if (!tbody) return;
+
+    [...tbody.children].forEach(fila => {
+      let puntos = 0;
+      // Las celdas de pronosticos empiezan en índice 1 (después del usuario)
+      for (let i = 1; i <= 10; i++) {
+        const td = fila.children[i];
+        if (!td) continue;
+        const pred = td.textContent.toUpperCase();
+        const real = resultadosManuales[i];
+
+        if (real && pred === real) {
+          td.classList.add('highlight-yellow');
+          puntos += 3;
+        } else {
+          td.classList.remove('highlight-yellow');
+        }
+      }
+      // Actualiza el total en la última celda
+      const totalTd = fila.children[11];
+      if (totalTd) totalTd.textContent = puntos;
+    });
+  }
+</script>
+
 </body>
 </html>
-
-
