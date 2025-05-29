@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Historial de Pronósticos</title>
+  <title>Resultados de Pronósticos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
-      padding: 0;
       margin: 0;
+      padding: 0;
     }
 
     header {
@@ -87,14 +87,14 @@
 <body>
 
   <header>
-    <h1>Quiniela MX - Resultados</h1>
+    <h1>Quiniela MX - Resultados Generales</h1>
     <button id="logout-btn">Cerrar sesión</button>
   </header>
 
   <main>
-    <h2>Historial de Pronósticos por Usuario</h2>
+    <h2>Pronósticos por Usuario</h2>
     <table id="tabla-resultados">
-      <!-- Tabla generada con JavaScript -->
+      <!-- Tabla generada dinámicamente -->
     </table>
   </main>
 
@@ -103,7 +103,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <!-- Configuración de Firebase -->
+  <!-- Tu configuración de Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
@@ -120,52 +120,51 @@
     }
 
     function formatearFecha(fecha) {
-      const opciones = { year: 'numeric', month: '2-digit', day: '2-digit' };
-      return fecha.toLocaleDateString('es-MX', opciones);
+      return fecha.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
     }
 
     function formatearHora(fecha) {
-      const opciones = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-      return fecha.toLocaleTimeString('es-MX', opciones);
+      return fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     }
 
     async function obtenerNombre(uid) {
       const doc = await db.collection("users").doc(uid).get();
       if (doc.exists) {
-        const d = doc.data();
-        return d.name || d.email || uid;
+        const data = doc.data();
+        return data.name || data.email || uid;
       }
       return uid;
     }
 
     async function mostrarResultados() {
-      const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
-
       const tabla = document.getElementById("tabla-resultados");
-      let header = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
+      let encabezado = `<tr><th>Usuario</th><th>Fecha</th><th>Hora</th>`;
       for (let i = 1; i <= 10; i++) {
-        header += `<th>P${i}</th>`;
+        encabezado += `<th>P${i}</th>`;
       }
-      header += `<th>Total</th></tr>`;
-      tabla.innerHTML = header;
+      encabezado += `<th>Total</th></tr>`;
+      tabla.innerHTML = encabezado;
+
+      const snapshot = await db.collection("pronosticos").orderBy("fecha", "desc").get();
 
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        const nombre = await obtenerNombre(data.userId);
-        const fechaObj = data.fecha.toDate();
-        const fechaStr = formatearFecha(fechaObj);
-        const horaStr = formatearHora(fechaObj);
-        let fila = `<tr><td>${nombre}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
+        const usuario = await obtenerNombre(data.userId);
+        const fecha = data.fecha.toDate();
+        const fechaStr = formatearFecha(fecha);
+        const horaStr = formatearHora(fecha);
+        const partidos = data.partidos || [];
+
+        let fila = `<tr><td>${usuario}</td><td>${fechaStr}</td><td>${horaStr}</td>`;
         let total = 0;
 
         for (let i = 0; i < 10; i++) {
-          const partido = data.partidos[i];
-          const pred = partido?.prediccion || "-";
+          const prediccion = partidos[i]?.prediccion || "-";
           const real = resultadosReales[i + 1];
-          const correcto = pred === real;
-          const clase = correcto ? 'correcto' : 'incorrecto';
-          total += correcto ? 3 : 0;
-          fila += `<td class="${clase}">${formato(pred)}</td>`;
+          const correcta = prediccion === real;
+          const clase = correcta ? "correcto" : "incorrecto";
+          total += correcta ? 3 : 0;
+          fila += `<td class="${clase}">${formato(prediccion)}</td>`;
         }
 
         fila += `<td class="total">${total}</td></tr>`;
@@ -173,7 +172,7 @@
       }
     }
 
-    // Autenticación
+    // Autenticación y ejecución
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
         mostrarResultados();
@@ -182,13 +181,13 @@
       }
     });
 
-    // Cerrar sesión
+    // Botón cerrar sesión
     document.getElementById("logout-btn").addEventListener("click", () => {
       firebase.auth().signOut().then(() => {
         window.location.href = "login.html";
       });
     });
   </script>
-
 </body>
 </html>
+
