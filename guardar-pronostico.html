@@ -1,6 +1,83 @@
-<h1>Login</h1>
-<form method="POST" action="{{ url_for('login') }}">
-    <input type="text" name="username" placeholder="Usuario" required>
-    <button type="submit">Ingresar</button>
-</form>
-<a href="{{ url_for('registro') }}">Registrarse</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Guardar Pronóstico | Quiniela MX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #006847;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #006847;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+        button:hover {
+            background-color: #004d33;
+        }
+    </style>
+</head>
+<body>
+    <h1>Guardar Pronóstico de Ejemplo</h1>
+    <p>Haz clic para guardar un pronóstico en Firebase y probar la visualización de resultados.</p>
+    <button id="guardar-btn">Guardar Pronóstico</button>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+    <!-- Configuración personalizada -->
+    <script src="js/firebase-config.js"></script> <!-- Asegúrate de tener este archivo con la configuración de tu proyecto -->
+
+    <script>
+        const db = firebase.firestore();
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                document.getElementById("guardar-btn").addEventListener("click", async () => {
+                    const pronosticoEjemplo = {
+                        userId: user.uid,
+                        fecha: new Date(),
+                        partidos: [
+                            { local: "América", visitante: "Guadalajara", prediccion: "X" },
+                            { local: "Cruz Azul", visitante: "Monterrey", prediccion: "1" },
+                            { local: "Tigres", visitante: "Pumas", prediccion: "2" },
+                            { local: "Santos", visitante: "Pachuca", prediccion: "1" },
+                            { local: "León", visitante: "Toluca", prediccion: "X" },
+                            { local: "Atlas", visitante: "Necaxa", prediccion: "2" },
+                            { local: "Mazatlán", visitante: "Juárez", prediccion: "1" },
+                            { local: "Querétaro", visitante: "Tijuana", prediccion: "X" },
+                            { local: "Puebla", visitante: "San Luis", prediccion: "2" },
+                            { local: "Monarcas", visitante: "Veracruz", prediccion: "1" }
+                        ]
+                    };
+
+                    try {
+                        await db.collection("pronosticos").add(pronosticoEjemplo);
+                        alert("✅ Pronóstico guardado correctamente.");
+                    } catch (error) {
+                        console.error("❌ Error al guardar el pronóstico:", error);
+                        alert("Ocurrió un error al guardar el pronóstico.");
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
