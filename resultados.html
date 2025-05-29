@@ -49,13 +49,8 @@
     #logout-btn:hover {
       background-color: #a00d1c;
     }
-    .resultado-input {
-      width: 40px;
-      text-transform: uppercase;
-      text-align: center;
-    }
-    .acierto {
-      background-color: yellow;
+    .highlight {
+      background-color: yellow !important;
     }
   </style>
 </head>
@@ -68,64 +63,37 @@
 
   <h1>Pronósticos Registrados</h1>
 
-  <!-- Tabla para ingresar resultados manualmente -->
-  <table id="tabla-inputs">
+  <table>
     <thead>
       <tr>
-        <th>Resultados</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
-        <th>Total</th>
+        <th colspan="3">Resultados Oficiales</th>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
+        <th>P6</th><th>P7</th><th>P8</th><th>P9</th><th>P10</th>
       </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Ingresar</strong></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="0" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="1" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="2" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="3" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="4" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="5" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="6" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="7" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="8" /></td>
-        <td><input class="resultado-input" maxlength="1" data-partido="9" /></td>
-        <td></td>
+      <tr id="input-resultados">
+        <td colspan="3">Ingresar Resultados</td>
+        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
       </tr>
-    </tbody>
-  </table>
-
-  <!-- Tabla de resultados -->
-  <table id="resultados">
-    <thead>
       <tr>
         <th>Usuario</th>
         <th>Fecha</th>
         <th>Hora</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
-        <th>Aciertos</th>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
+        <th>P6</th><th>P7</th><th>P8</th><th>P9</th><th>P10</th>
+        <th>Total</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Se insertan dinámicamente -->
+    <tbody id="resultados-body">
+      <!-- Contenido dinámico -->
     </tbody>
   </table>
 
@@ -133,43 +101,48 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+  <!-- Tu configuración de Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
-    const tbody = document.querySelector("#resultados tbody");
-    const inputs = document.querySelectorAll(".resultado-input");
+    const tbody = document.querySelector("#resultados-body");
 
-    let resultadosReales = Array(10).fill(null);
-
-    inputs.forEach(input => {
-      input.addEventListener("input", () => {
-        const index = parseInt(input.dataset.partido);
-        resultadosReales[index] = input.value.toUpperCase();
-        cargarResultados();
-      });
-    });
+    async function obtenerCorreoUsuario(userId) {
+      try {
+        const querySnapshot = await db.collection('users').where('uid', '==', userId).limit(1).get();
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          return userData.email || 'Sin correo';
+        } else {
+          return 'Desconocido';
+        }
+      } catch (error) {
+        console.error("Error obteniendo usuario:", error);
+        return 'Desconocido';
+      }
+    }
 
     async function cargarResultados() {
-      tbody.innerHTML = "";
+      // Leer resultados oficiales de inputs
+      const resultadosOficiales = {};
+      for (let i = 1; i <= 10; i++) {
+        const val = document.getElementById(`res-${i}`).value.toUpperCase();
+        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
+      }
+
+      tbody.innerHTML = '';
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        const userId = data.userId;
-        const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
+        const userId = data.userId || data.uid;
 
-        try {
-          const userDoc = await db.collection('users').doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (err) {
-          console.error("Error al obtener usuario:", err);
-        }
+        // Obtener correo del usuario
+        const correo = await obtenerCorreoUsuario(userId);
 
+        // Formatear fecha y hora
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
           const fechaObj = data.fecha.toDate();
@@ -177,44 +150,42 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        let aciertos = 0;
+        // Calcular aciertos y generar columnas con resaltado
+        let total = 0;
+        const tds = (data.partidos || []).map((p, i) => {
+          const prediccion = p.prediccion || '-';
+          const coincide = resultadosOficiales[i + 1] && resultadosOficiales[i + 1] === prediccion;
+          if (coincide) total++;
+          return `<td class="${coincide ? 'highlight' : ''}">${prediccion}</td>`;
+        });
+
+        // Crear fila y añadir al tbody
         const fila = document.createElement('tr');
         fila.innerHTML = `
-          <td>${nombre}</td>
+          <td>${correo}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
+          ${tds.join('')}
+          <td>${total}</td>
         `;
-
-        for (let i = 0; i < 10; i++) {
-          const prediccion = partidos[i]?.prediccion || '-';
-          const coincide = resultadosReales[i] && resultadosReales[i] === prediccion;
-          if (coincide) aciertos++;
-          const td = document.createElement('td');
-          td.textContent = prediccion;
-          if (coincide) td.classList.add('acierto');
-          fila.appendChild(td);
-        }
-
-        const tdTotal = document.createElement('td');
-        tdTotal.textContent = aciertos;
-        fila.appendChild(tdTotal);
         tbody.appendChild(fila);
       }
     }
 
+    // Actualizar tabla al cambiar resultados oficiales
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarResultados();
+      for (let i = 1; i <= 10; i++) {
+        document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
+      }
+    });
+
+    // Botón cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
       firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
       });
     });
-
-    window.addEventListener('DOMContentLoaded', cargarResultados);
-  </script>
-</body>
-</html>
-
-
-    window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
 </body>
 </html>
