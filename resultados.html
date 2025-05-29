@@ -3,15 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resultados de Quiniela</title>
+  <title>Resultados | Quiniela MX</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
+      background-color: #f7f7f7;
       padding: 20px;
     }
-    h1 {
+    header {
+      background-color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
       text-align: center;
       color: #006847;
     }
@@ -23,63 +32,86 @@
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
     }
     th {
       background-color: #006847;
       color: white;
     }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: white;
-      padding: 10px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    tr.correct {
+      background-color: #e0ffe0;
     }
-    #logout-btn {
+    tr.incorrect {
+      background-color: #ffe0e0;
+    }
+    .total {
+      font-weight: bold;
+      background-color: #eee;
+    }
+    .formulario {
+      background-color: white;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .formulario select {
+      margin: 5px;
+    }
+    button {
       background-color: #ce1126;
       color: white;
-      padding: 8px 12px;
+      padding: 8px 15px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
-    #logout-btn:hover {
-      background-color: #a00d1c;
+    button:hover {
+      background-color: #a50e1d;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h2>Resultados de Todos los Usuarios</h2>
-    <button id="logout-btn">Cerrar Sesión</button>
-  </div>
+  <header>
+    <div><strong>Usuario:</strong> <span id="usuario-actual">Cargando...</span></div>
+    <button id="logout-btn">Cerrar sesión</button>
+  </header>
 
-  <h1>Pronósticos Registrados</h1>
+  <h1>Resultados Registrados</h1>
 
-  <table id="resultados">
+  <!-- Formulario para ingresar resultados -->
+  <form id="form-resultados" class="formulario">
+    <h3>Registrar Resultados Reales</h3>
+    <div style="display: flex; flex-wrap: wrap;">
+      <!-- 10 Selects para P1 a P10 -->
+      ${[...Array(10)].map((_, i) => `
+        <label for="P${i+1}" style="margin-right: 10px;">
+          P${i+1}
+          <select name="P${i+1}" required>
+            <option value="">-</option>
+            <option value="1">Gana Local</option>
+            <option value="X">Empate</option>
+            <option value="2">Gana Visitante</option>
+          </select>
+        </label>
+      `).join('')}
+    </div>
+    <button type="submit">Guardar Resultados</button>
+  </form>
+
+  <!-- Tabla de resultados -->
+  <table id="tabla-resultados">
     <thead>
       <tr>
         <th>Usuario</th>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>P1</th>
-        <th>P2</th>
-        <th>P3</th>
-        <th>P4</th>
-        <th>P5</th>
-        <th>P6</th>
-        <th>P7</th>
-        <th>P8</th>
-        <th>P9</th>
-        <th>P10</th>
+        ${[...Array(10)].map((_, i) => `<th>P${i+1}</th>`).join('')}
+        <th>Puntos</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Aquí se insertarán los resultados dinámicamente -->
+      <!-- Contenido dinámico -->
     </tbody>
   </table>
 
@@ -87,64 +119,104 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  
-  <!-- Configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
-    const tbody = document.querySelector("#resultados tbody");
 
-    async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+    let resultadosReales = {};
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const userId = data.userId;
-        const partidos = data.partidos || [];
-
-        // Obtener usuario
-        let nombre = 'Desconocido';
-        try {
-          const userDoc = await db.collection('users').doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (err) {
-          console.error("Error al obtener usuario:", err);
-        }
-
-        // Convertir fecha
-        let fechaTexto = '', horaTexto = '';
-        if (data.fecha && typeof data.fecha.toDate === 'function') {
-          const fechaObj = data.fecha.toDate();
-          fechaTexto = fechaObj.toLocaleDateString();
-          horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${nombre}</td>
-          <td>${fechaTexto}</td>
-          <td>${horaTexto}</td>
-          ${[...Array(10)].map((_, i) => `<td>${partidos[i]?.prediccion || '-'}</td>`).join('')}
-        `;
-        tbody.appendChild(fila);
+    // Mostrar nombre de usuario
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        document.getElementById('usuario-actual').textContent = userDoc.exists ? userDoc.data().name : user.email;
       }
-    }
+    });
 
     // Cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
-      firebase.auth().signOut().then(() => {
-        window.location.href = 'login.html';
-      });
+      firebase.auth().signOut();
     });
 
-    // Cargar resultados
-    window.addEventListener('DOMContentLoaded', cargarResultados);
+    // Guardar resultados reales
+    document.getElementById('form-resultados').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const nuevosResultados = {};
+      for (let i = 1; i <= 10; i++) {
+        const val = form[`P${i}`].value;
+        if (val) nuevosResultados[i] = val;
+      }
+      try {
+        await db.collection('resultados').doc('jornadaActual').set({
+          resultados: nuevosResultados,
+          fecha: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Resultados guardados.');
+        form.reset();
+        cargarResultados();
+      } catch (error) {
+        console.error(error);
+        alert('Error al guardar resultados.');
+      }
+    });
+
+    async function cargarResultados() {
+      const tabla = document.querySelector("#tabla-resultados tbody");
+      tabla.innerHTML = "";
+
+      // Obtener resultados reales
+      const resDoc = await db.collection('resultados').doc('jornadaActual').get();
+      if (resDoc.exists) {
+        resultadosReales = resDoc.data().resultados;
+      }
+
+      const pronosSnapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+
+      for (const doc of pronosSnapshot.docs) {
+        const data = doc.data();
+        const userId = data.userId;
+        const partidos = data.partidos;
+
+        const userDoc = await db.collection('users').doc(userId).get();
+        const username = userDoc.exists ? userDoc.data().name : "Usuario desconocido";
+
+        let puntos = 0;
+        const fila = document.createElement('tr');
+        const userTd = document.createElement('td');
+        userTd.textContent = username;
+        fila.appendChild(userTd);
+
+        partidos.forEach((partido, index) => {
+          const pred = partido.prediccion;
+          const real = resultadosReales[index + 1];
+          const td = document.createElement('td');
+
+          td.textContent = pred;
+          if (pred === real) {
+            td.classList.add('correct');
+            puntos += 3;
+          } else {
+            td.classList.add('incorrect');
+          }
+
+          fila.appendChild(td);
+        });
+
+        const puntosTd = document.createElement('td');
+        puntosTd.textContent = puntos;
+        puntosTd.classList.add('total');
+        fila.appendChild(puntosTd);
+        tabla.appendChild(fila);
+      }
+    }
+
+    // Cargar automáticamente
+    window.addEventListener('load', cargarResultados);
   </script>
 </body>
 </html>
+
 
 
