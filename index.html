@@ -2,67 +2,107 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Captura de Pronósticos - Quiniela MX</title>
+  <title>Captura de Pronósticos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 30px auto;
+      max-width: 900px;
+      margin: 40px auto;
       padding: 20px;
-      background-color: #f9f9f9;
+      background: #f0f0f0;
     }
-    h2 {
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    header h1 {
+      margin: 0;
       color: #006847;
-      text-align: center;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-info span {
+      font-weight: bold;
+      color: #333;
+    }
+    .logout-btn {
+      padding: 8px 14px;
+      background-color: #ce1126;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
     form {
       background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .partido {
-      margin-top: 15px;
+      margin-bottom: 15px;
     }
-    .partido label.partido-titulo {
-      font-weight: bold;
+    .partido label {
       display: block;
-      margin-bottom: 8px;
-    }
-    .opciones label {
-      margin-right: 20px;
-      cursor: pointer;
-      user-select: none;
+      margin-bottom: 5px;
       font-weight: 500;
     }
-    .opciones input[type="radio"] {
-      margin-right: 6px;
-      cursor: pointer;
+    select {
+      width: 100%;
+      padding: 8px;
     }
-    button {
-      margin-top: 25px;
-      padding: 12px 25px;
+    button[type="submit"] {
+      margin-top: 20px;
+      padding: 10px 20px;
       background-color: #006847;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      font-weight: 600;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
-      display: block;
-      width: 100%;
     }
-    button:hover {
+    button[type="submit"]:hover {
       background-color: #004d33;
     }
   </style>
 </head>
 <body>
-  <h2>Captura de Pronósticos - Jornada</h2>
-  <form id="pronosticos-form">
-    <div id="partidos-container"></div>
+
+  <header>
+    <h1>Captura de Pronósticos</h1>
+    <div class="user-info">
+      <span id="username">Usuario</span>
+      <button class="logout-btn" id="logout-btn">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <form id="formulario-pronosticos">
+    <div class="partido">
+      <label>1. América vs Guadalajara</label>
+      <select name="p1">
+        <option value="1">Gana Local</option>
+        <option value="X">Empate</option>
+        <option value="2">Gana Visitante</option>
+      </select>
+    </div>
+    <div class="partido">
+      <label>2. Cruz Azul vs Monterrey</label>
+      <select name="p2">
+        <option value="1">Gana Local</option>
+        <option value="X">Empate</option>
+        <option value="2">Gana Visitante</option>
+      </select>
+    </div>
+    <!-- Puedes agregar más partidos igual que los anteriores -->
+
     <button type="submit">Guardar Pronósticos</button>
   </form>
 
@@ -70,98 +110,49 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-
-  <!-- Tu configuración Firebase -->
   <script src="js/firebase-config.js"></script>
 
   <script>
     const db = firebase.firestore();
 
-    const partidos = [
-      { local: "América", visitante: "Guadalajara" },
-      { local: "Cruz Azul", visitante: "Monterrey" },
-      { local: "Tigres", visitante: "Pumas" },
-      { local: "Santos", visitante: "Pachuca" },
-      { local: "León", visitante: "Toluca" },
-      { local: "Atlas", visitante: "Necaxa" },
-      { local: "Mazatlán", visitante: "Juárez" },
-      { local: "Querétaro", visitante: "Tijuana" },
-      { local: "Puebla", visitante: "San Luis" },
-      { local: "Monarcas", visitante: "Veracruz" }
-    ];
-
-    const container = document.getElementById('partidos-container');
-
-    // Generar formulario con botones radio para cada partido
-    partidos.forEach((partido, index) => {
-      const divPartido = document.createElement('div');
-      divPartido.className = "partido";
-
-      const labelTitulo = document.createElement('label');
-      labelTitulo.className = 'partido-titulo';
-      labelTitulo.textContent = `${index + 1}. ${partido.local} vs ${partido.visitante}`;
-
-      const opcionesDiv = document.createElement('div');
-      opcionesDiv.className = 'opciones';
-
-      ["1", "X", "2"].forEach(value => {
-        const label = document.createElement('label');
-
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = `prediccion-${index}`;
-        radio.value = value;
-        radio.required = true;
-
-        label.appendChild(radio);
-        label.appendChild(document.createTextNode(
-          value === "1" ? "Gana Local" :
-          value === "X" ? "Empate" :
-          "Gana Visitante"
-        ));
-
-        opcionesDiv.appendChild(label);
-      });
-
-      divPartido.appendChild(labelTitulo);
-      divPartido.appendChild(opcionesDiv);
-      container.appendChild(divPartido);
-    });
-
-    // Guardar pronósticos en Firestore
-    document.getElementById('pronosticos-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const user = firebase.auth().currentUser;
+    // Verifica sesión activa
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
-        alert("Debes iniciar sesión para guardar tus pronósticos.");
+        window.location.href = "login.html";
         return;
       }
 
-      const partidosData = partidos.map((partido, index) => {
-        const prediccion = document.querySelector(`input[name="prediccion-${index}"]:checked`).value;
-        return {
-          local: partido.local,
-          visitante: partido.visitante,
-          prediccion
-        };
+      // Mostrar nombre del usuario
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      document.getElementById('username').textContent = userDoc.exists ? userDoc.data().name : user.email;
+    });
+
+    // Guardar pronósticos
+    document.getElementById('formulario-pronosticos').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      const partidos = [
+        { local: "América", visitante: "Guadalajara", prediccion: e.target.p1.value },
+        { local: "Cruz Azul", visitante: "Monterrey", prediccion: e.target.p2.value },
+        // Agrega aquí más partidos
+      ];
+
+      await db.collection("pronosticos").add({
+        userId: user.uid,
+        fecha: new Date(),
+        partidos
       });
 
-      try {
-        await db.collection("pronosticos").add({
-          userId: user.uid,
-          fecha: firebase.firestore.FieldValue.serverTimestamp(),
-          partidos: partidosData
-        });
+      window.location.href = "resultados.html";
+    });
 
-        alert("Pronósticos guardados correctamente.");
-        document.getElementById('pronosticos-form').reset();
-      } catch (error) {
-        console.error("Error al guardar pronósticos:", error);
-        alert("Hubo un error al guardar los pronósticos. Intenta nuevamente.");
-      }
+    // Cerrar sesión
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      firebase.auth().signOut();
     });
   </script>
 </body>
 </html>
-
