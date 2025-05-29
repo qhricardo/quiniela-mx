@@ -54,9 +54,14 @@
       font-weight: bold;
     }
     input.resultado-input {
-      width: 30px;
+      width: 100%;
+      max-width: 40px;
       text-transform: uppercase;
       text-align: center;
+      border: none;
+      background: #e8f5e9;
+      padding: 5px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -69,11 +74,11 @@
 
   <h1>Pronósticos Registrados</h1>
 
-  <!-- Tabla para ingresar resultados manuales -->
-  <table>
+  <!-- Tabla de resultados ingresados manualmente -->
+  <table id="tabla-inputs">
     <thead>
       <tr>
-        <th></th>
+        <th>Resultados</th>
         <th>P1</th>
         <th>P2</th>
         <th>P3</th>
@@ -86,14 +91,17 @@
         <th>P10</th>
         <th>Total</th>
       </tr>
-      <tr>
-        <th>Resultados</th>
-        ${[...Array(10)].map((_, i) => `<th><input class="resultado-input" maxlength="1" data-partido="${i}" /></th>`).join('')}
-        <th></th>
-      </tr>
     </thead>
+    <tbody>
+      <tr>
+        <td><strong>Ingresar</strong></td>
+        ${[...Array(10)].map((_, i) => `<td><input class="resultado-input" maxlength="1" data-partido="${i}" /></td>`).join('')}
+        <td></td>
+      </tr>
+    </tbody>
   </table>
 
+  <!-- Tabla de resultados de usuarios -->
   <table id="resultados">
     <thead>
       <tr>
@@ -138,7 +146,7 @@
     });
 
     async function cargarResultados() {
-      tbody.innerHTML = ""; // Limpiar tabla
+      tbody.innerHTML = "";
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
       for (const doc of snapshot.docs) {
@@ -146,7 +154,6 @@
         const userId = data.userId;
         const partidos = data.partidos || [];
 
-        // Obtener usuario
         let nombre = 'Desconocido';
         try {
           const userDoc = await db.collection('users').doc(userId).get();
@@ -158,7 +165,6 @@
           console.error("Error al obtener usuario:", err);
         }
 
-        // Convertir fecha
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
           const fechaObj = data.fecha.toDate();
@@ -166,7 +172,6 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Crear fila
         const fila = document.createElement('tr');
         fila.innerHTML = `
           <td>${nombre}</td>
@@ -201,14 +206,12 @@
       });
     }
 
-    // Cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
       firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
       });
     });
 
-    // Cargar datos al iniciar
     window.addEventListener('DOMContentLoaded', cargarResultados);
   </script>
 </body>
