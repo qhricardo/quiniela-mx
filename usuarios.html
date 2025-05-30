@@ -2,108 +2,89 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Usuarios</title>
+  <title>Editar UID de Usuario</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 30px;
-      background-color: #f4f4f4;
-    }
-    h1 {
-      color: #006847;
+      padding: 30px;
+      background: #f5f5f5;
     }
     form {
-      background-color: white;
+      background: white;
       padding: 20px;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      border-radius: 8px;
       max-width: 400px;
+      margin: auto;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    input[type="text"], input[type="email"] {
+    input {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
-      box-sizing: border-box;
+      margin-top: 10px;
     }
     button {
-      background-color: #006847;
-      color: white;
-      padding: 10px;
-      border: none;
       width: 100%;
-      cursor: pointer;
+      padding: 10px;
+      background: #006847;
+      color: white;
+      border: none;
+      margin-top: 15px;
     }
-    button:hover {
-      background-color: #004c36;
-    }
-    .success {
-      color: green;
-      margin-top: 10px;
-    }
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
+    .success { color: green; margin-top: 10px; }
+    .error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-<h1>Registrar Usuario</h1>
+  <h2>Editar UID de Usuario</h2>
 
-<form id="usuario-form">
-  <label for="uid">UID del Usuario:</label>
-  <input type="text" id="uid" required>
+  <form id="form-editar-uid">
+    <label for="email">Correo del Usuario:</label>
+    <input type="email" id="email" required>
 
-  <label for="name">Nombre:</label>
-  <input type="text" id="name" required>
+    <label for="nuevo-uid">Nuevo UID:</label>
+    <input type="text" id="nuevo-uid" required>
 
-  <label for="email">Correo Electrónico:</label>
-  <input type="email" id="email" required>
+    <button type="submit">Actualizar UID</button>
 
-  <button type="submit">Guardar Usuario</button>
-  <p id="mensaje"></p>
-</form>
+    <p id="mensaje"></p>
+  </form>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
 
-<script>
-  const db = firebase.firestore();
+  <script>
+    const db = firebase.firestore();
 
-  document.getElementById('usuario-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+    document.getElementById('form-editar-uid').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const nuevoUid = document.getElementById('nuevo-uid').value.trim();
+      const mensaje = document.getElementById('mensaje');
 
-    const uid = document.getElementById('uid').value.trim();
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const mensaje = document.getElementById('mensaje');
+      try {
+        const querySnapshot = await db.collection('users').where('email', '==', email).limit(1).get();
 
-    if (!uid || !name || !email) {
-      mensaje.textContent = "Todos los campos son obligatorios.";
-      mensaje.className = 'error';
-      return;
-    }
+        if (querySnapshot.empty) {
+          mensaje.textContent = "Usuario no encontrado.";
+          mensaje.className = "error";
+          return;
+        }
 
-    try {
-      await db.collection('users').doc(uid).set({
-        uid: uid,
-        name: name,
-        email: email
-      });
+        const docRef = querySnapshot.docs[0].ref;
 
-      mensaje.textContent = "Usuario guardado correctamente.";
-      mensaje.className = 'success';
-      document.getElementById('usuario-form').reset();
-    } catch (error) {
-      console.error("Error al guardar usuario:", error);
-      mensaje.textContent = "Error al guardar usuario.";
-      mensaje.className = 'error';
-    }
-  });
-</script>
+        await docRef.update({ uid: nuevoUid });
 
+        mensaje.textContent = "UID actualizado correctamente.";
+        mensaje.className = "success";
+      } catch (error) {
+        console.error("Error actualizando UID:", error);
+        mensaje.textContent = "Error al actualizar UID.";
+        mensaje.className = "error";
+      }
+    });
+  </script>
 </body>
 </html>
