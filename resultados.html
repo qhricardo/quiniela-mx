@@ -108,57 +108,63 @@
     const tbody = document.querySelector("#resultados-body");
 
     async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+      try {
+        // Obtiene todos los pronósticos ordenados por fecha descendente
+        const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
 
-      const resultadosOficiales = {};
-      for (let i = 1; i <= 10; i++) {
-        const val = document.getElementById(`res-${i}`).value.toUpperCase();
-        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
-      }
-
-      tbody.innerHTML = '';
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
-
-        try {
-          const userRef = db.collection('users').doc(data.userId);
-          const userDoc = await userRef.get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          } else {
-            nombre = data.userId || 'Sin ID';
-          }
-        } catch (e) {
-          console.error('Error buscando usuario:', e);
-        }
-
-        let fechaTexto = '', horaTexto = '';
-        if (data.fecha && typeof data.fecha.toDate === 'function') {
-          const fechaObj = data.fecha.toDate();
-          fechaTexto = fechaObj.toLocaleDateString();
-          horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        let total = 0;
-        const tds = partidos.map((p, i) => {
-          const res = p.prediccion;
-          const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
-          if (coincide) total++;
-          return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
+        // Carga todos los usuarios en un mapa para acceder rápido a su email o nombre
+        const usersSnapshot = await db.collection('users').get();
+        const usersMap = new Map();
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          usersMap.set(doc.id, data.email || data.name || 'Sin nombre');
         });
 
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-          <td>${nombre}</td>
-          <td>${fechaTexto}</td>
-          <td>${horaTexto}</td>
-          ${tds.join('')}
-          <td>${total}</td>
-        `;
-        tbody.appendChild(fila);
+        // Obtiene resultados oficiales ingresados
+        const resultadosOficiales = {};
+        for (let i = 1; i <= 10; i++) {
+          const val = document.getElementById(`res-${i}`).value.toUpperCase();
+          if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
+        }
+
+        tbody.innerHTML = '';
+
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const partidos = data.partidos || [];
+          // Obtener nombre o correo del usuario que hizo el pronóstico
+          const nombre = usersMap.get(data.userId) || 'Desconocido';
+
+          // Formatear fecha y hora
+          let fechaTexto = '', horaTexto = '';
+          if (data.fecha && typeof data.fecha.toDate === 'function') {
+            const fechaObj = data.fecha.toDate();
+            fechaTexto = fechaObj.toLocaleDateString();
+            horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+
+          // Calcular total de aciertos según resultados oficiales
+          let total = 0;
+          const tds = partidos.map((p, i) => {
+            const res = p.prediccion;
+            const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
+            if (coincide) total++;
+            return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
+          });
+
+          const fila = document.createElement('tr');
+          fila.innerHTML = `
+            <td>${nombre}</td>
+            <td>${fechaTexto}</td>
+            <td>${horaTexto}</td>
+            ${tds.join('')}
+            <td>${total}</td>
+          `;
+          tbody.appendChild(fila);
+        }
+      } catch (error) {
+        console.error('Error cargando resultados:', error);
+        tbody.innerHTML = `<tr><td colspan="15">Error cargando resultados. Intente más tarde.</td></tr>`;
       }
     }
 
@@ -177,3 +183,4 @@
   </script>
 </body>
 </html>
+
