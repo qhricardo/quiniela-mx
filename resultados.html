@@ -72,19 +72,10 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
+        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
       </tr>
       <tr>
-        <th>Usuario</th>
+        <th>Correo</th>
         <th>Fecha</th>
         <th>Hora</th>
         <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
@@ -120,16 +111,12 @@
       for (const doc of snapshot.docs) {
         const data = doc.data();
         const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
-
+        let correo = 'Desconocido';
         try {
-          const userRef = db.collection('users').doc(data.userId);
-          const userDoc = await userRef.get();
+          const userDoc = await db.collection('users').doc(data.userId).get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          } else {
-            nombre = data.userId || 'Sin ID';
+            correo = userData.email || 'Sin correo';
           }
         } catch (e) {
           console.error('Error buscando usuario:', e);
@@ -152,7 +139,7 @@
 
         const fila = document.createElement('tr');
         fila.innerHTML = `
-          <td>${nombre}</td>
+          <td>${correo}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
           ${tds.join('')}
@@ -176,6 +163,8 @@
     });
   </script>
 </body>
+</html>
+
 </html>
 </body>
 </html>
