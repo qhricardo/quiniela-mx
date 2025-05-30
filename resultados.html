@@ -99,15 +99,15 @@
     const tbody = document.querySelector("#resultados-body");
 
     async function cargarResultados() {
-      const [pronosticosSnap, usersSnap] = await Promise.all([
-        db.collection('pronosticos').orderBy('fecha', 'desc').get(),
-        db.collection('users').get()
+      const [usersSnapshot, pronosticosSnapshot] = await Promise.all([
+        db.collection('users').get(),
+        db.collection('pronosticos').orderBy('fecha', 'desc').get()
       ]);
 
       const userMap = {};
-      usersSnap.forEach(doc => {
+      usersSnapshot.forEach(doc => {
         const data = doc.data();
-        userMap[data.uid] = data.email || data.name || 'Sin nombre';
+        userMap[doc.id] = data.email || data.name || 'Sin nombre';
       });
 
       const resultadosOficiales = {};
@@ -117,10 +117,10 @@
       }
 
       tbody.innerHTML = '';
-      pronosticosSnap.forEach(doc => {
+      for (const doc of pronosticosSnapshot.docs) {
         const data = doc.data();
         const partidos = data.partidos || [];
-        const nombre = userMap[data.userId] || data.userId || 'Desconocido';
+        const nombre = userMap[data.userId] || 'Desconocido';
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
@@ -146,7 +146,7 @@
           <td>${total}</td>
         `;
         tbody.appendChild(fila);
-      });
+      }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
