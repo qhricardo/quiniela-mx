@@ -99,28 +99,26 @@
     const tbody = document.querySelector("#resultados-body");
 
     async function cargarResultados() {
-      const [usersSnapshot, pronosticosSnapshot] = await Promise.all([
-        db.collection('users').get(),
-        db.collection('pronosticos').orderBy('fecha', 'desc').get()
-      ]);
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+      const usersMap = new Map();
+      const usersSnapshot = await db.collection('users').get();
 
-      const userMap = {};
       usersSnapshot.forEach(doc => {
         const data = doc.data();
-        userMap[doc.id] = data.email || data.name || 'Sin nombre';
+        usersMap.set(doc.id, data.email || data.name || 'Sin nombre');
       });
 
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
         const val = document.getElementById(`res-${i}`).value.toUpperCase();
-        if (["L","E","V"].includes(val)) resultadosOficiales[i] = val;
+        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
       }
 
       tbody.innerHTML = '';
-      for (const doc of pronosticosSnapshot.docs) {
+      for (const doc of snapshot.docs) {
         const data = doc.data();
         const partidos = data.partidos || [];
-        const nombre = userMap[data.userId] || 'Desconocido';
+        let nombre = usersMap.get(data.userId) || 'Desconocido';
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
