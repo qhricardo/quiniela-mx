@@ -1,14 +1,12 @@
-const jwt = require('jsonwebtoken');
-
-const generateJWT = (userId) => {
-    return new Promise((resolve, reject) => {
-        jwt.sign(
-            { uid: userId },
-            process.env.JWT_SECRET,
-            { expiresIn: '4h' },
-            (err, token) => err ? reject(err) : resolve(token)
-        );
-    });
-};
-
-module.exports = { generateJWT };
+window.partidosProgramados = [
+  "Equipo A vs Equipo B",
+  "Equipo C vs Equipo D",
+  "Equipo E vs Equipo F",
+  "Equipo G vs Equipo H",
+  "Equipo I vs Equipo J",
+  "Equipo K vs Equipo L",
+  "Equipo M vs Equipo N",
+  "Equipo O vs Equipo P",
+  "Equipo Q vs Equipo R",
+  "Equipo S vs Equipo T"
+];
