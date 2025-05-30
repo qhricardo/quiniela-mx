@@ -102,47 +102,54 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <!-- Tu configuración de Firebase -->
   <script src="js/firebase-config.js"></script>
-
   <script>
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados-body");
 
-    async function obtenerCorreoUsuario(userId) {
+    const cacheUsuarios = {};
+
+    async function obtenerNombreUsuario(userId) {
+      if (cacheUsuarios[userId]) return cacheUsuarios[userId];
+
       try {
-        const querySnapshot = await db.collection('users').where('uid', '==', userId).limit(1).get();
+        // Primer intento: buscar por uid en la colección 'users'
+        let querySnapshot = await db.collection('users').where('uid', '==', userId).limit(1).get();
         if (!querySnapshot.empty) {
           const userData = querySnapshot.docs[0].data();
-          return userData.email || 'Sin correo';
-        } else {
-          return 'Desconocido';
+          cacheUsuarios[userId] = userData.name || userData.email || 'Sin nombre';
+          return cacheUsuarios[userId];
         }
-      } catch (error) {
-        console.error("Error obteniendo usuario:", error);
-        return 'Desconocido';
+
+        // Segundo intento: buscar por ID de documento
+        const docSnap = await db.collection('users').doc(userId).get();
+        if (docSnap.exists) {
+          const data = docSnap.data();
+          cacheUsuarios[userId] = data.name || data.email || 'Sin nombre';
+          return cacheUsuarios[userId];
+        }
+      } catch (e) {
+        console.error('Error buscando usuario:', e);
       }
+      return 'Desconocido';
     }
 
     async function cargarResultados() {
-      // Leer resultados oficiales de inputs
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
         const val = document.getElementById(`res-${i}`).value.toUpperCase();
-        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
+        if (["L","E","V"].includes(val)) resultadosOficiales[i] = val;
       }
 
       tbody.innerHTML = '';
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        const userId = data.userId || data.uid;
+        const partidos = data.partidos || [];
 
-        // Obtener correo del usuario
-        const correo = await obtenerCorreoUsuario(userId);
+        const nombre = await obtenerNombreUsuario(data.userId);
 
-        // Formatear fecha y hora
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
           const fechaObj = data.fecha.toDate();
@@ -150,19 +157,17 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Calcular aciertos y generar columnas con resaltado
         let total = 0;
-        const tds = (data.partidos || []).map((p, i) => {
-          const prediccion = p.prediccion || '-';
-          const coincide = resultadosOficiales[i + 1] && resultadosOficiales[i + 1] === prediccion;
+        const tds = partidos.map((p, i) => {
+          const res = p.prediccion;
+          const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
           if (coincide) total++;
-          return `<td class="${coincide ? 'highlight' : ''}">${prediccion}</td>`;
+          return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
         });
 
-        // Crear fila y añadir al tbody
         const fila = document.createElement('tr');
         fila.innerHTML = `
-          <td>${correo}</td>
+          <td>${nombre}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
           ${tds.join('')}
@@ -172,7 +177,6 @@
       }
     }
 
-    // Actualizar tabla al cambiar resultados oficiales
     window.addEventListener('DOMContentLoaded', () => {
       cargarResultados();
       for (let i = 1; i <= 10; i++) {
@@ -180,7 +184,6 @@
       }
     });
 
-    // Botón cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
       firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
@@ -189,3 +192,4 @@
   </script>
 </body>
 </html>
+
