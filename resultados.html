@@ -11,7 +11,7 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
+    h1, h3 {
       text-align: center;
       color: #006847;
     }
@@ -52,19 +52,11 @@
     .highlight {
       background-color: yellow !important;
     }
-    .partidos-cuadro {
-      background-color: #ffffff;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      margin-bottom: 20px;
-    }
-    .partidos-cuadro h3 {
-      margin-top: 0;
-      color: #006847;
-    }
-    .partidos-cuadro ul {
-      padding-left: 20px;
+    .tabla-partidos {
+      width: 60%;
+      margin: 0 auto;
+      margin-top: 20px;
+      background: #fff;
     }
   </style>
 </head>
@@ -75,10 +67,15 @@
     <button id="logout-btn">Cerrar Sesión</button>
   </div>
 
-  <div id="cuadro-partidos" class="partidos-cuadro">
-    <h3>Partidos Programados</h3>
-    <ul id="lista-partidos"></ul>
-  </div>
+  <h3>Partidos Programados</h3>
+  <table class="tabla-partidos" id="tabla-partidos">
+    <thead>
+      <tr><th>#</th><th>Partido</th></tr>
+    </thead>
+    <tbody>
+      <!-- Se llenará con datos de partidos-data.js -->
+    </tbody>
+  </table>
 
   <h1>Pronósticos Registrados</h1>
 
@@ -118,16 +115,15 @@
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados-body");
 
-    const partidosProgramados = window.partidosProgramados || [];
-
-    function mostrarPartidosDesdeJS() {
-      const lista = document.getElementById("lista-partidos");
-      lista.innerHTML = '';
-      partidosProgramados.forEach(nombre => {
-        const li = document.createElement('li');
-        li.textContent = nombre;
-        lista.appendChild(li);
-      });
+    function cargarPartidosProgramados() {
+      const tabla = document.querySelector('#tabla-partidos tbody');
+      if (window.partidosProgramados && Array.isArray(window.partidosProgramados)) {
+        tabla.innerHTML = window.partidosProgramados.map((partido, index) => `
+          <tr><td>${index + 1}</td><td>${partido}</td></tr>
+        `).join('');
+      } else {
+        tabla.innerHTML = '<tr><td colspan="2">No hay partidos programados.</td></tr>';
+      }
     }
 
     async function cargarResultados() {
@@ -180,7 +176,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      mostrarPartidosDesdeJS();
+      cargarPartidosProgramados();
       cargarResultados();
       for (let i = 1; i <= 10; i++) {
         document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
@@ -195,4 +191,5 @@
   </script>
 </body>
 </html>
+
 
