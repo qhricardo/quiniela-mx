@@ -52,27 +52,6 @@
     .highlight {
       background-color: yellow !important;
     }
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    form h3 {
-      margin-top: 0;
-    }
-    form input {
-      padding: 8px;
-      margin: 5px;
-    }
-    form button {
-      padding: 10px 15px;
-      background-color: #006847;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -81,14 +60,6 @@
     <h2>Resultados de Todos los Usuarios</h2>
     <button id="logout-btn">Cerrar Sesión</button>
   </div>
-
-  <form id="usuario-form">
-    <h3>Agregar/Editar Usuario</h3>
-    <input type="text" id="uid" placeholder="UID" required />
-    <input type="text" id="name" placeholder="Nombre" required />
-    <input type="email" id="email" placeholder="Correo" required />
-    <button type="submit">Guardar Usuario</button>
-  </form>
 
   <h1>Pronósticos Registrados</h1>
 
@@ -101,7 +72,16 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
+        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
       </tr>
       <tr>
         <th>Usuario</th>
@@ -122,14 +102,30 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
+  <!-- Tu configuración de Firebase -->
   <script src="js/firebase-config.js"></script>
+
   <script>
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados-body");
 
-    async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+    async function obtenerCorreoUsuario(userId) {
+      try {
+        const querySnapshot = await db.collection('users').where('uid', '==', userId).limit(1).get();
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          return userData.email || 'Sin correo';
+        } else {
+          return 'Desconocido';
+        }
+      } catch (error) {
+        console.error("Error obteniendo usuario:", error);
+        return 'Desconocido';
+      }
+    }
 
+    async function cargarResultados() {
+      // Leer resultados oficiales de inputs
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
         const val = document.getElementById(`res-${i}`).value.toUpperCase();
@@ -137,20 +133,16 @@
       }
 
       tbody.innerHTML = '';
+      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
-        try {
-          const querySnapshot = await db.collection('users').where('uid', '==', data.userId).limit(1).get();
-          if (!querySnapshot.empty) {
-            const userData = querySnapshot.docs[0].data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          }
-        } catch (e) {
-          console.error('Error buscando usuario:', e);
-        }
+        const userId = data.userId || data.uid;
 
+        // Obtener correo del usuario
+        const correo = await obtenerCorreoUsuario(userId);
+
+        // Formatear fecha y hora
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
           const fechaObj = data.fecha.toDate();
@@ -158,17 +150,19 @@
           horaTexto = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
+        // Calcular aciertos y generar columnas con resaltado
         let total = 0;
-        const tds = partidos.map((p, i) => {
-          const res = p.prediccion;
-          const coincide = resultadosOficiales[i+1] && resultadosOficiales[i+1] === res;
+        const tds = (data.partidos || []).map((p, i) => {
+          const prediccion = p.prediccion || '-';
+          const coincide = resultadosOficiales[i + 1] && resultadosOficiales[i + 1] === prediccion;
           if (coincide) total++;
-          return `<td class="${coincide ? 'highlight' : ''}">${res}</td>`;
+          return `<td class="${coincide ? 'highlight' : ''}">${prediccion}</td>`;
         });
 
+        // Crear fila y añadir al tbody
         const fila = document.createElement('tr');
         fila.innerHTML = `
-          <td>${nombre}</td>
+          <td>${correo}</td>
           <td>${fechaTexto}</td>
           <td>${horaTexto}</td>
           ${tds.join('')}
@@ -178,6 +172,7 @@
       }
     }
 
+    // Actualizar tabla al cambiar resultados oficiales
     window.addEventListener('DOMContentLoaded', () => {
       cargarResultados();
       for (let i = 1; i <= 10; i++) {
@@ -185,32 +180,11 @@
       }
     });
 
+    // Botón cerrar sesión
     document.getElementById('logout-btn').addEventListener('click', () => {
       firebase.auth().signOut().then(() => {
         window.location.href = 'login.html';
       });
-    });
-
-    document.getElementById('usuario-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const uid = document.getElementById('uid').value.trim();
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      if (!uid || !name || !email) {
-        alert('Todos los campos son obligatorios.');
-        return;
-      }
-
-      try {
-        await db.collection('users').doc(uid).set({ uid, name, email });
-        alert('Usuario guardado exitosamente');
-        document.getElementById('usuario-form').reset();
-        cargarResultados();
-      } catch (error) {
-        console.error('Error guardando usuario:', error);
-        alert('Error al guardar el usuario');
-      }
     });
   </script>
 </body>
