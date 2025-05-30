@@ -1,5 +1,5 @@
 window.partidosProgramados = [
-  "Equipo A vs Equipo B",
+  "America vs Chivas",
   "Equipo C vs Equipo D",
   "Equipo E vs Equipo F",
   "Equipo G vs Equipo H",
