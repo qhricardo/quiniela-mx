@@ -72,16 +72,7 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
+        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
       </tr>
       <tr>
         <th>Usuario</th>
@@ -108,32 +99,28 @@
     const tbody = document.querySelector("#resultados-body");
 
     async function cargarResultados() {
-      const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+      const [pronosticosSnap, usersSnap] = await Promise.all([
+        db.collection('pronosticos').orderBy('fecha', 'desc').get(),
+        db.collection('users').get()
+      ]);
+
+      const userMap = {};
+      usersSnap.forEach(doc => {
+        const data = doc.data();
+        userMap[data.uid] = data.email || data.name || 'Sin nombre';
+      });
 
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
         const val = document.getElementById(`res-${i}`).value.toUpperCase();
-        if (['L','E','V'].includes(val)) resultadosOficiales[i] = val;
+        if (["L","E","V"].includes(val)) resultadosOficiales[i] = val;
       }
 
       tbody.innerHTML = '';
-      for (const doc of snapshot.docs) {
+      pronosticosSnap.forEach(doc => {
         const data = doc.data();
         const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
-
-        try {
-          const userRef = db.collection('users').doc(data.userId);
-          const userDoc = await userRef.get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          } else {
-            nombre = data.userId || 'Sin ID';
-          }
-        } catch (e) {
-          console.error('Error buscando usuario:', e);
-        }
+        const nombre = userMap[data.userId] || data.userId || 'Desconocido';
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
@@ -159,7 +146,7 @@
           <td>${total}</td>
         `;
         tbody.appendChild(fila);
-      }
+      });
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -177,3 +164,4 @@
   </script>
 </body>
 </html>
+
