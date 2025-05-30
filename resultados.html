@@ -72,10 +72,19 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
+        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
       </tr>
       <tr>
-        <th>Correo</th>
+        <th>Usuario</th>
         <th>Fecha</th>
         <th>Hora</th>
         <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
@@ -113,9 +122,9 @@
         const partidos = data.partidos || [];
         let correo = 'Desconocido';
         try {
-          const userDoc = await db.collection('users').doc(data.userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
+          const userSnapshot = await db.collection('users').where('uid', '==', data.userId).limit(1).get();
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
             correo = userData.email || 'Sin correo';
           }
         } catch (e) {
@@ -165,9 +174,3 @@
 </body>
 </html>
 
-</html>
-</body>
-</html>
-
-</body>
-</html>
