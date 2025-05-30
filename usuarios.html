@@ -1,90 +1,48 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Editar UID de Usuario</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      background: #f5f5f5;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #006847;
-      color: white;
-      border: none;
-      margin-top: 15px;
-    }
-    .success { color: green; margin-top: 10px; }
-    .error { color: red; margin-top: 10px; }
-  </style>
-</head>
-<body>
+<h2>Editar Sobrenombre de Usuario</h2>
+<form id="form-sobrenombre">
+  <label>Email del usuario:</label><br>
+  <input type="email" id="email-buscar" required><br><br>
 
-  <h2>Editar UID de Usuario</h2>
+  <label>Nuevo sobrenombre:</label><br>
+  <input type="text" id="nuevo-sobrenombre" required><br><br>
 
-  <form id="form-editar-uid">
-    <label for="email">Correo del Usuario:</label>
-    <input type="email" id="email" required>
+  <button type="submit">Actualizar Sobrenombre</button>
+  <p id="mensaje-sobrenombre"></p>
+</form>
 
-    <label for="nuevo-uid">Nuevo UID:</label>
-    <input type="text" id="nuevo-uid" required>
+<!-- Firebase SDK (asegúrate de que estos estén ya incluidos en tu página) -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
 
-    <button type="submit">Actualizar UID</button>
+<script>
+  const db = firebase.firestore();
 
-    <p id="mensaje"></p>
-  </form>
+  document.getElementById("form-sobrenombre").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email-buscar").value.trim();
+    const nuevoSobrenombre = document.getElementById("nuevo-sobrenombre").value.trim();
+    const mensaje = document.getElementById("mensaje-sobrenombre");
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
-
-  <script>
-    const db = firebase.firestore();
-
-    document.getElementById('form-editar-uid').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const nuevoUid = document.getElementById('nuevo-uid').value.trim();
-      const mensaje = document.getElementById('mensaje');
-
-      try {
-        const querySnapshot = await db.collection('users').where('email', '==', email).limit(1).get();
-
-        if (querySnapshot.empty) {
-          mensaje.textContent = "Usuario no encontrado.";
-          mensaje.className = "error";
-          return;
-        }
-
-        const docRef = querySnapshot.docs[0].ref;
-
-        await docRef.update({ uid: nuevoUid });
-
-        mensaje.textContent = "UID actualizado correctamente.";
-        mensaje.className = "success";
-      } catch (error) {
-        console.error("Error actualizando UID:", error);
-        mensaje.textContent = "Error al actualizar UID.";
-        mensaje.className = "error";
+    try {
+      const querySnapshot = await db.collection("users").where("email", "==", email).limit(1).get();
+      
+      if (querySnapshot.empty) {
+        mensaje.textContent = "Usuario no encontrado.";
+        mensaje.style.color = "red";
+        return;
       }
-    });
-  </script>
-</body>
-</html>
+
+      const docRef = querySnapshot.docs[0].ref;
+      await docRef.update({ sobrenombre: nuevoSobrenombre });
+
+      mensaje.textContent = "Sobrenombre actualizado correctamente.";
+      mensaje.style.color = "green";
+    } catch (error) {
+      console.error("Error al actualizar sobrenombre:", error);
+      mensaje.textContent = "Error al actualizar sobrenombre.";
+      mensaje.style.color = "red";
+    }
+  });
+</script>
+
