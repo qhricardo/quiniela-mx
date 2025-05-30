@@ -121,15 +121,11 @@
         const data = doc.data();
         const partidos = data.partidos || [];
         let nombre = 'Desconocido';
-
         try {
-          const userRef = db.collection('users').doc(data.userId);
-          const userDoc = await userRef.get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          } else {
-            nombre = data.userId || 'Sin ID';
+          const querySnapshot = await db.collection('users').where('uid', '==', data.userId).limit(1).get();
+          if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            nombre = userData.sobrenombre || userData.name || userData.email || 'Sin nombre';
           }
         } catch (e) {
           console.error('Error buscando usuario:', e);
@@ -177,3 +173,4 @@
   </script>
 </body>
 </html>
+
