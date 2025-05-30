@@ -1,14 +1,13 @@
-const jwt = require('jsonwebtoken');
-
-const generateJWT = (userId) => {
-    return new Promise((resolve, reject) => {
-        jwt.sign(
-            { uid: userId },
-            process.env.JWT_SECRET,
-            { expiresIn: '4h' },
-            (err, token) => err ? reject(err) : resolve(token)
-        );
-    });
-};
-
-module.exports = { generateJWT };
+// partidos-data.js
+const partidosProgramados = [
+  "América vs Pumas",
+  "Tigres vs Monterrey",
+  "Chivas vs Cruz Azul",
+  "León vs Toluca",
+  "Puebla vs Santos",
+  "Atlas vs Necaxa",
+  "Querétaro vs Juárez",
+  "Mazatlán vs Tijuana",
+  "San Luis vs Pachuca",
+  "UNAM vs América"
+];
