@@ -52,17 +52,33 @@
     .highlight {
       background-color: yellow !important;
     }
+    .partidos-cuadro {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    .partidos-cuadro h3 {
+      margin-top: 0;
+      color: #006847;
+    }
+    .partidos-cuadro ul {
+      padding-left: 20px;
+    }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <h2>Resultados de Todos los Usuarios</h2>
-  <div id="descripcion-partidos" style="font-size: 14px; color: #004d40; margin-top: 4px; font-weight: normal;">
-    Cargando partidos...
+  <div class="header">
+    <h2>Resultados de Todos los Usuarios</h2>
+    <button id="logout-btn">Cerrar Sesión</button>
   </div>
-  <button id="logout-btn">Cerrar Sesión</button>
-</div>
+
+  <div id="cuadro-partidos" class="partidos-cuadro">
+    <h3>Partidos Programados</h3>
+    <ul id="lista-partidos"></ul>
+  </div>
 
   <h1>Pronósticos Registrados</h1>
 
@@ -75,16 +91,7 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
-        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
+        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
       </tr>
       <tr>
         <th>Usuario</th>
@@ -106,12 +113,32 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
   <script src="js/firebase-config.js"></script>
+  <script src="js/partidos-data.js"></script>
   <script>
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados-body");
 
+    const partidosProgramados = window.partidosProgramados || [];
+
+    function mostrarPartidosDesdeJS() {
+      const lista = document.getElementById("lista-partidos");
+      lista.innerHTML = '';
+      partidosProgramados.forEach(nombre => {
+        const li = document.createElement('li');
+        li.textContent = nombre;
+        lista.appendChild(li);
+      });
+    }
+
     async function cargarResultados() {
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
+      const usersMap = new Map();
+      const usersSnapshot = await db.collection('users').get();
+
+      usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        usersMap.set(doc.id, data.email || data.name || 'Sin nombre');
+      });
 
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
@@ -123,20 +150,7 @@
       for (const doc of snapshot.docs) {
         const data = doc.data();
         const partidos = data.partidos || [];
-        let nombre = 'Desconocido';
-
-        try {
-          const userRef = db.collection('users').doc(data.userId);
-          const userDoc = await userRef.get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            nombre = userData.name || userData.email || 'Sin nombre';
-          } else {
-            nombre = data.userId || 'Sin ID';
-          }
-        } catch (e) {
-          console.error('Error buscando usuario:', e);
-        }
+        let nombre = usersMap.get(data.userId) || 'Desconocido';
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
@@ -166,6 +180,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      mostrarPartidosDesdeJS();
       cargarResultados();
       for (let i = 1; i <= 10; i++) {
         document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
@@ -180,3 +195,4 @@
   </script>
 </body>
 </html>
+
