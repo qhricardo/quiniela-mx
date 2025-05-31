@@ -1,102 +1,280 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Registro de Pronóstico</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #eef1f2;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #006847;
-    }
-    form {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .partido {
-      margin-bottom: 10px;
-    }
-    .partido label {
-      display: block;
-      font-weight: bold;
-    }
-    .partido select {
-      width: 100%;
-      padding: 6px;
-    }
-    button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 10px;
-      background-color: #006847;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #004f35;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiniela MX | Pronósticos</title>
+    <style>
+        :root {
+            --verde: #006847;
+            --rojo: #ce1126;
+            --azul: #0038a8;
+            --gris: #f5f5f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--gris);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info span {
+            font-weight: 500;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        #logout-btn {
+            background-color: var(--rojo);
+            color: white;
+        }
+        #logout-btn:hover {
+            background-color: #a00d20;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            color: var(--verde);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .partido {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: border 0.3s;
+        }
+        .equipos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .equipo {
+            width: 40%;
+            text-align: center;
+            font-weight: 500;
+        }
+        .vs {
+            width: 20%;
+            text-align: center;
+            color: var(--rojo);
+            font-weight: bold;
+        }
+        .opciones {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .opcion {
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .opcion:hover {
+            background-color: #f0f0f0;
+        }
+        .opcion.selected {
+            background-color: var(--verde);
+            color: white;
+            border-color: var(--verde);
+        }
+        .local { background-color: #e8f5e9; }
+        .empate { background-color: #fff8e1; }
+        .visitante { background-color: #ffebee; }
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        #guardar-btn {
+            background-color: var(--verde);
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #guardar-btn:hover:not(:disabled) {
+            background-color: #004d33;
+        }
+        #guardar-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--verde);
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <h2>Quiniela MX</h2>
+        <div class="user-info">
+            <span id="username"></span>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </header>
 
-  <h1>Pronóstico Semanal</h1>
+    <div class="container">
+        <h1>Pronósticos - Jornada 1</h1>
+        <div id="partidos-container">
+            <!-- Aquí se cargarán los partidos dinámicamente -->
+        </div>
 
-  <form id="form-pronostico">
-    <div id="contenedor-partidos"></div>
-    <button type="submit">Enviar Pronóstico</button>
-  </form>
+        <div class="actions">
+            <button id="guardar-btn">Guardar Pronósticos</button>
+        </div>
+        <div id="loading" class="loading">Guardando tus pronósticos...</div>
+    </div>
 
-  <!-- Archivo que contiene los equipos programados -->
-  <script src="js/partidos-data.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
-  <script>
-    const contenedor = document.getElementById("contenedor-partidos");
+    <!-- Configuración -->
+    <script src="js/firebase-config.js"></script>
 
-    // Crea un bloque por cada partido
-    window.partidosProgramados.forEach((partido, index) => {
-      const div = document.createElement('div');
-      div.className = 'partido';
+    <script>
+        const db = firebase.firestore();
+        let currentUser = null;
 
-      div.innerHTML = `
-        <label for="partido-${index}">${partido}</label>
-        <select id="partido-${index}" name="partido-${index}">
-          <option value="">Selecciona</option>
-          <option value="L">Local</option>
-          <option value="E">Empate</option>
-          <option value="V">Visitante</option>
-        </select>
-      `;
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-      contenedor.appendChild(div);
-    });
+            currentUser = user;
 
-    // Ejemplo de manejo del formulario
-    document.getElementById('form-pronostico').addEventListener('submit', function (e) {
-      e.preventDefault();
+            // Mostrar nombre de usuario
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            document.getElementById('username').textContent = userDoc.exists ? userDoc.data().name : user.email;
 
-      const pronosticos = [];
-      for (let i = 0; i < window.partidosProgramados.length; i++) {
-        const valor = document.getElementById(`partido-${i}`).value.toUpperCase();
-        pronosticos.push({ partido: window.partidosProgramados[i], prediccion: valor });
-      }
+            // Cargar partidos desde Firestore
+            const partidosSnapshot = await db.collection('partidos-data').orderBy('orden').get();
+            const container = document.getElementById('partidos-container');
+            container.innerHTML = ''; // limpiar antes de cargar
 
-      console.log("Pronóstico enviado:", pronosticos);
+            partidosSnapshot.forEach(doc => {
+                const data = doc.data();
+                const partidoHTML = `
+                    <div class="partido">
+                        <div class="equipos">
+                            <div class="equipo">${data.local}</div>
+                            <div class="vs">VS</div>
+                            <div class="equipo">${data.visitante}</div>
+                        </div>
+                        <div class="opciones">
+                            <div class="opcion local" data-result="L">Gana Local</div>
+                            <div class="opcion empate" data-result="E">Empate</div>
+                            <div class="opcion visitante" data-result="V">Gana Visitante</div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', partidoHTML);
+            });
 
-      // Aquí podrías guardar los pronósticos en Firestore u otra base de datos.
-    });
-  </script>
-</body>
-</html>
+            // Asignar eventos a las opciones de selección
+            document.querySelectorAll('.opcion').forEach(opcion => {
+                opcion.addEventListener('click', function () {
+                    this.closest('.partido').querySelectorAll('.opcion').forEach(el => el.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Cargar pronósticos anteriores, si existen
+            const pronosticosSnapshot = await db.collection('pronosticos')
+                .where('userId', '==', user.uid)
+                .orderBy('fecha', 'desc')
+                .limit(1)
+                .get();
+
+            if (!pronosticosSnapshot.empty) {
+                const pronosticos = pronosticosSnapshot.docs[0].data();
+                document.querySelectorAll('.partido').forEach((partidoEl, index) => {
+                    const partido = pronosticos.partidos[index];
+                    if (!partido) return;
+                    const opcion = partidoEl.querySelector(`.opcion[data-result="${partido.prediccion}"]`);
+                    if (opcion) opcion.classList.add('selected');
+                });
+            }
+        });
+
+        // Guardar pronósticos
+        document.getElementById('guardar-btn').addEventListener('click', async () => {
+            const partidos = [];
+            let completo = true;
+
+            document.querySelectorAll('.partido').forEach(partidoEl => {
+                const opcion = partidoEl.querySelector('.opcion.selected');
+                if (!opcion) {
+                    completo = false;
+                    partidoEl.style.border = '1px solid red';
+                    setTimeout(() => partidoEl.style.border = 'none', 1000);
+                    return;
+                }
+                const equipos = partidoEl.querySelectorAll('.equipo');
+                partidos.push({
+                    local: equipos[0].textContent,
+                    visitante: equipos[1].textContent,
+                    prediccion: opcion.getAttribute('data-result')
+                });
+            });
+
+            if (!completo) {
+                alert('¡Debes seleccionar un resultado para todos los partidos!');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('guardar-btn').disabled = true;
+
+            try {
+                await db.collection('pronosticos').add({
+                    userId: currentUser.uid,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    partidos: partidos
+                });
+                window.location.href = 'resultados.html';
+            } catch (error) {
+                console.error(error);
+                alert('Error al guardar: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('guardar-btn').disabled = false;
+            }
+       
 
