@@ -1,33 +1,59 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro</title>
+  <meta charset="UTF-8" />
+  <title>Registro con Firebase</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <h2>Registro</h2>
   <form id="registroForm">
-    <input type="text" id="usuario" placeholder="Usuario" required><br>
-    <input type="password" id="contrasena" placeholder="Contraseña" required><br>
+    <input type="email" id="email" placeholder="Correo electrónico" required /><br />
+    <input type="password" id="contrasena" placeholder="Contraseña" required /><br />
     <button type="submit">Registrarse</button>
   </form>
 
   <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
 
   <script>
+    // Configuración Firebase - reemplaza con tus datos reales de firebase-config.js
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_MESSAGING_SENDER_ID",
+      appId: "TU_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
     document.getElementById('registroForm').addEventListener('submit', function (e) {
       e.preventDefault();
 
-      const usuario = document.getElementById('usuario').value;
+      const email = document.getElementById('email').value;
       const contrasena = document.getElementById('contrasena').value;
 
-      if (localStorage.getItem(usuario)) {
-        alert('Este usuario ya existe.');
-      } else {
-        localStorage.setItem(usuario, contrasena);
-        alert('Usuario registrado con éxito.');
-        window.location.href = 'login.html';
-      }
+      auth.createUserWithEmailAndPassword(email, contrasena)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          // Opcional: guardar datos adicionales en Firestore
+          return db.collection('users').doc(user.uid).set({
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        })
+        .then(() => {
+          alert('Usuario registrado con éxito.');
+          window.location.href = 'login.html';
+        })
+        .catch((error) => {
+          console.error(error);
+          alert('Error al registrar usuario: ' + error.message);
+        });
     });
   </script>
 </body>
