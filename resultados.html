@@ -11,7 +11,7 @@
       margin: 0;
       padding: 20px;
     }
-    h1, h3 {
+    h1 {
       text-align: center;
       color: #006847;
     }
@@ -52,11 +52,31 @@
     .highlight {
       background-color: yellow !important;
     }
-    .tabla-partidos {
-      width: 60%;
-      margin: 0 auto;
-      margin-top: 20px;
-      background: #fff;
+    .partidos-cuadro {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 15px auto;
+      width: 90%;
+      max-width: 600px;
+      font-size: 14px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .partidos-cuadro h3 {
+      margin-top: 0;
+      text-align: center;
+      color: #006847;
+    }
+    .partidos-cuadro ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .partidos-cuadro li {
+      padding: 2px 0;
+      border-bottom: 1px solid #eee;
+      text-align: center;
     }
   </style>
 </head>
@@ -67,15 +87,11 @@
     <button id="logout-btn">Cerrar Sesión</button>
   </div>
 
-  <h3>Partidos Programados</h3>
-  <table class="tabla-partidos" id="tabla-partidos">
-    <thead>
-      <tr><th>#</th><th>Partido</th></tr>
-    </thead>
-    <tbody>
-      <!-- Se llenará con datos de partidos-data.js -->
-    </tbody>
-  </table>
+  <!-- Recuadro informativo de partidos -->
+  <div id="partidos-info" class="partidos-cuadro">
+    <h3>Partidos Programados</h3>
+    <ul id="lista-partidos"></ul>
+  </div>
 
   <h1>Pronósticos Registrados</h1>
 
@@ -88,7 +104,16 @@
       </tr>
       <tr id="input-resultados">
         <td colspan="3">Ingresar Resultados</td>
-        ${[...Array(10)].map((_, i) => `<td><input type="text" maxlength="1" size="1" id="res-${i+1}" /></td>`).join('')}
+        <td><input type="text" maxlength="1" size="1" id="res-1" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-2" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-3" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-4" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-5" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-6" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-7" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-8" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-9" /></td>
+        <td><input type="text" maxlength="1" size="1" id="res-10" /></td>
       </tr>
       <tr>
         <th>Usuario</th>
@@ -109,32 +134,18 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
+  <!-- Configuración de Firebase -->
   <script src="js/firebase-config.js"></script>
+
+  <!-- Cargar partidos desde archivo externo -->
   <script src="js/partidos-data.js"></script>
+
   <script>
     const db = firebase.firestore();
     const tbody = document.querySelector("#resultados-body");
 
-    function cargarPartidosProgramados() {
-      const tabla = document.querySelector('#tabla-partidos tbody');
-      if (window.partidosProgramados && Array.isArray(window.partidosProgramados)) {
-        tabla.innerHTML = window.partidosProgramados.map((partido, index) => `
-          <tr><td>${index + 1}</td><td>${partido}</td></tr>
-        `).join('');
-      } else {
-        tabla.innerHTML = '<tr><td colspan="2">No hay partidos programados.</td></tr>';
-      }
-    }
-
     async function cargarResultados() {
       const snapshot = await db.collection('pronosticos').orderBy('fecha', 'desc').get();
-      const usersMap = new Map();
-      const usersSnapshot = await db.collection('users').get();
-
-      usersSnapshot.forEach(doc => {
-        const data = doc.data();
-        usersMap.set(doc.id, data.email || data.name || 'Sin nombre');
-      });
 
       const resultadosOficiales = {};
       for (let i = 1; i <= 10; i++) {
@@ -146,7 +157,20 @@
       for (const doc of snapshot.docs) {
         const data = doc.data();
         const partidos = data.partidos || [];
-        let nombre = usersMap.get(data.userId) || 'Desconocido';
+        let nombre = 'Desconocido';
+
+        try {
+          const userRef = db.collection('users').doc(data.userId);
+          const userDoc = await userRef.get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            nombre = userData.name || userData.email || 'Sin nombre';
+          } else {
+            nombre = data.userId || 'Sin ID';
+          }
+        } catch (e) {
+          console.error('Error buscando usuario:', e);
+        }
 
         let fechaTexto = '', horaTexto = '';
         if (data.fecha && typeof data.fecha.toDate === 'function') {
@@ -176,10 +200,21 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      cargarPartidosProgramados();
       cargarResultados();
+
       for (let i = 1; i <= 10; i++) {
         document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
+      }
+
+      // Mostrar partidos desde partidos-data.js
+      const lista = document.getElementById('lista-partidos');
+      if (window.partidosProgramados && lista) {
+        lista.innerHTML = '';
+        window.partidosProgramados.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = p;
+          lista.appendChild(li);
+        });
       }
     });
 
