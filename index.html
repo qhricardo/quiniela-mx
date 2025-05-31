@@ -276,5 +276,14 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('guardar-btn').disabled = false;
             }
-       
+        });
+
+        // Cerrar sesión
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut();
+        });
+    </script>
+</body>
+</html>
+
 
