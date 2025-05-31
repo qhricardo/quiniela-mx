@@ -1,55 +1,57 @@
-<!DOCTYPE html>
+<!DOCTYPE html>Add commentMore actions
 <html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <title>Registro - Quiniela MX</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .auth-container { max-width: 500px; }
+        .password-hint { 
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: -10px;
+        }
+    </style>
   <meta charset="UTF-8">
   <title>Registro</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
 </head>
 <body>
-
-  <h2>Registro de Usuario</h2>
-  <form id="registro-form">
-    <input type="text" id="nombre" placeholder="Nombre completo" required><br><br>
-    <input type="email" id="email" placeholder="Correo electrónico" required><br><br>
-    <input type="password" id="password" placeholder="Contraseña" required><br><br>
+    <div class="auth-container">
+        <h1>📝 Crear Cuenta</h1>
+        <form id="registerForm">
+            <input type="text" placeholder="Nombre completo" required>
+            <input type="email" placeholder="Correo electrónico" required>
+            <input type="password" placeholder="Contraseña" minlength="8" required>
+            <p class="password-hint">Mínimo 8 caracteres, 1 mayúscula y 1 número</p>
+            <button type="submit" class="btn">Registrarme</button>
+        </form>
+        <p class="auth-footer">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+    </div>
+  <h2>Registro</h2>
+  <form id="registroForm">
+    <input type="text" id="usuario" placeholder="Usuario" required><br>
+    <input type="password" id="contrasena" placeholder="Contraseña" required><br>
     <button type="submit">Registrarse</button>
   </form>
 
+    <script src="js/auth.js"></script>
+  <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
+
   <script>
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    document.getElementById('registroForm').addEventListener('submit', function (e) {
+      e.preventDefault();
 
-    document.getElementById("registro-form").addEventListener("submit", async function(event) {
-      event.preventDefault();
+      const usuario = document.getElementById('usuario').value;
+      const contrasena = document.getElementById('contrasena').value;
 
-      const nombre = document.getElementById("nombre").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      try {
-        // Registrar al usuario
-        const credencial = await auth.createUserWithEmailAndPassword(email, password);
-        const user = credencial.user;
-
-        // Crear documento en colección "users" con el UID como ID
-        await db.collection("users").doc(user.uid).set({
-          uid: user.uid,
-          name: nombre,
-          email: email
-        });
-
-        alert("Usuario registrado exitosamente");
-        window.location.href = "login.html";
-
-      } catch (error) {
-        console.error("Error en el registro:", error);
-        alert("Error en el registro: " + error.message);
+      if (localStorage.getItem(usuario)) {
+        alert('Este usuario ya existe.');
+      } else {
+        localStorage.setItem(usuario, contrasena);
+        alert('Usuario registrado con éxito.');
+        window.location.href = 'login.html';
       }
     });
   </script>
 </body>
 </html>
-
