@@ -1,209 +1,401 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Quiniela MX</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #006847, #ce1126);
-      color: #333;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .container {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 10px;
-      width: 400px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #006847;
-    }
-
-    .partido {
-      margin-bottom: 1rem;
-    }
-
-    select {
-      width: 100%;
-      padding: 8px;
-      font-size: 16px;
-      border-radius: 5px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      background-color: #006847;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-
-    #status {
-      text-align: center;
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    #nueva-quiniela-btn {
-      margin-top: 1.5rem;
-      background-color: #ce1126;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiniela MX | Pronósticos</title>
+    <style>
+        :root {
+            --verde: #006847;
+            --rojo: #ce1126;
+            --azul: #0038a8;
+            --gris: #f5f5f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--gris);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info span {
+            font-weight: 500;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        #logout-btn {
+            background-color: var(--rojo);
+            color: white;
+        }
+        #logout-btn:hover {
+            background-color: #a00d20;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            color: var(--verde);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .partido {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .equipos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .equipo {
+            width: 40%;
+            text-align: center;
+            font-weight: 500;
+        }
+        .vs {
+            width: 20%;
+            text-align: center;
+            color: var(--rojo);
+            font-weight: bold;
+        }
+        .opciones {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .opcion {
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+        }
+        .opcion:hover {
+            background-color: #f0f0f0;
+        }
+        .opcion.selected {
+            background-color: var(--verde);
+            color: white;
+            border-color: var(--verde);
+        }
+        .local { background-color: #e8f5e9; }
+        .empate { background-color: #fff8e1; }
+        .visitante { background-color: #ffebee; }
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        #guardar-btn {
+            background-color: var(--verde);
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+        }
+        #guardar-btn:hover {
+            background-color: #004d33;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--verde);
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Tu Quiniela</h1>
-    <form id="quiniela-form">
-      <div class="partido">
-        <label>Partido 1:</label>
-        <select name="p1">
-          <option value="local">Local</option>
-          <option value="empate">Empate</option>
-          <option value="visita">Visita</option>
-        </select>
-      </div>
-      <div class="partido">
-        <label>Partido 2:</label>
-        <select name="p2">
-          <option value="local">Local</option>
-          <option value="empate">Empate</option>
-          <option value="visita">Visita</option>
-        </select>
-      </div>
-      <div class="partido">
-        <label>Partido 3:</label>
-        <select name="p3">
-          <option value="local">Local</option>
-          <option value="empate">Empate</option>
-          <option value="visita">Visita</option>
-        </select>
-      </div>
-      <button type="submit" id="guardar-btn">Guardar Pronóstico</button>
-    </form>
-    <button id="nueva-quiniela-btn">Nueva Quiniela</button>
-    <div id="status"></div>
-  </div>
+    <header>
+        <h2>Quiniela MX</h2>
+        <div class="user-info">
+            <span id="username"></span>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </div>
+    </header>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <div class="container">
+        <h1>Pronósticos - Jornada 1</h1>
+        
+        <!-- Partido 1 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">América</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Guadalajara</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-  <!-- Configuración de Firebase -->
-  <script src="js/firebase-config.js"></script>
+        <!-- Partido 2 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Cruz Azul</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Monterrey</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-  <script>
-    let registroActual = 1;
-    let totalRegistros = 0;
-    const form = document.getElementById('quiniela-form');
-    const statusDiv = document.getElementById('status');
-    const guardarBtn = document.getElementById('guardar-btn');
-    const nuevaQuinielaBtn = document.getElementById('nueva-quiniela-btn');
+        <!-- Partido 3 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Tigres</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Pumas</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-    function bloquearFormulario() {
-      document.querySelectorAll('select').forEach(s => s.disabled = true);
-      guardarBtn.disabled = true;
-      guardarBtn.textContent = 'Pronóstico Guardado';
-    }
+        <!-- Partido 4 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Santos</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Pachuca</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-    function limpiarFormulario() {
-      document.querySelectorAll('select').forEach(s => {
-        s.disabled = false;
-        s.selectedIndex = 0;
-      });
-      guardarBtn.disabled = false;
-      guardarBtn.textContent = 'Guardar Pronóstico';
-      statusDiv.textContent = '';
-    }
+        <!-- Partido 5 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">León</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Toluca</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (!user) {
-        form.style.display = 'none';
-        nuevaQuinielaBtn.style.display = 'none';
-        statusDiv.textContent = 'Debes iniciar sesión para usar la quiniela.';
-        return;
-      }
+        <!-- Partido 6 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Atlas</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Necaxa</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-      const uid = user.uid;
-      const registrosRef = firebase.firestore().collection('quinielas').doc(uid).collection('registros');
-      const snapshot = await registrosRef.get();
-      totalRegistros = snapshot.size;
+        <!-- Partido 7 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Mazatlán</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Juárez</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-      if (totalRegistros >= 5) {
-        bloquearFormulario();
-        nuevaQuinielaBtn.disabled = true;
-        statusDiv.textContent = 'Has alcanzado el límite de 5 quinielas.';
-      } else {
-        registroActual = totalRegistros + 1;
-        limpiarFormulario();
-      }
-    });
+        <!-- Partido 8 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Querétaro</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Tijuana</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+        <!-- Partido 9 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Puebla</div>
+                <div class="vs">VS</div>
+                <div class="equipo">San Luis</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
 
-      const user = firebase.auth().currentUser;
-      if (!user) return alert("No has iniciado sesión");
+        <!-- Partido 10 -->
+        <div class="partido">
+            <div class="equipos">
+                <div class="equipo">Monarcas</div>
+                <div class="vs">VS</div>
+                <div class="equipo">Veracruz</div>
+            </div>
+            <div class="opciones">
+                <div class="opcion local" data-result="L">Gana Local</div>
+                <div class="opcion empate" data-result="E">Empate</div>
+                <div class="opcion visitante" data-result="V">Gana Visitante</div>
+            </div>
+        </div>
+        <!-- Partidos 2 al 10 (misma estructura) -->
+        <!-- ... -->
 
-      const uid = user.uid;
+        <div class="actions">
+            <button id="guardar-btn">Guardar Pronósticos</button>
+        </div>
+        <div id="loading" class="loading">
+            Guardando tus pronósticos...
+        </div>
+    </div>
 
-      if (registroActual > 5) {
-        statusDiv.textContent = "Ya no puedes registrar más quinielas.";
-        return;
-      }
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Configuración -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- Lógica -->
+    <script>
+        const db = firebase.firestore();
+        let currentUser = null;
 
-      const resultados = [];
-      document.querySelectorAll('select').forEach(select => {
-        resultados.push(select.value);
-      });
-
-      await firebase.firestore()
-        .collection('quinielas')
-        .doc(uid)
-        .collection('registros')
-        .doc(registroActual.toString())
-        .set({
-          resultados,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        // Manejar estado de autenticación
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = user;
+            
+            // Mostrar nombre de usuario
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            document.getElementById('username').textContent = userDoc.exists ? userDoc.data().name : user.email;
+            
+            // Cargar pronósticos anteriores
+            const pronosticosSnapshot = await db.collection('pronosticos')
+                .where('userId', '==', user.uid)
+                .orderBy('fecha', 'desc')
+                .limit(1)
+                .get();
+                
+            if (!pronosticosSnapshot.empty) {
+                const pronosticos = pronosticosSnapshot.docs[0].data();
+                pronosticos.partidos.forEach((partido, index) => {
+                    const opcion = document.querySelector(`.partido:nth-child(${index + 1}) .opcion[data-result="${partido.prediccion}"]`);
+                    if (opcion) opcion.classList.add('selected');
+                });
+            }
         });
 
-      statusDiv.textContent = `Quiniela #${registroActual} guardada correctamente.`;
-      bloquearFormulario();
-      registroActual++;
-      totalRegistros++;
+        // Selección de resultados
+        document.querySelectorAll('.opcion').forEach(opcion => {
+            opcion.addEventListener('click', function() {
+                this.closest('.partido').querySelectorAll('.opcion').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
 
-      if (totalRegistros >= 5) {
-        nuevaQuinielaBtn.disabled = true;
-        statusDiv.textContent += " Límite alcanzado.";
-      }
-    });
+        // Guardar pronósticos
+        document.getElementById('guardar-btn').addEventListener('click', async () => {
+            const partidos = [];
+            let completo = true;
+            
+            // Validar selecciones
+            document.querySelectorAll('.partido').forEach(partidoEl => {
+                const opcion = partidoEl.querySelector('.opcion.selected');
+                if (!opcion) {
+                    completo = false;
+                    partidoEl.style.border = '1px solid red';
+                    setTimeout(() => partidoEl.style.border = 'none', 1000);
+                    return;
+                }
+                
+                const equipos = partidoEl.querySelectorAll('.equipo');
+                partidos.push({
+                    local: equipos[0].textContent,
+                    visitante: equipos[1].textContent,
+                    prediccion: opcion.getAttribute('data-result')
+                });
+            });
+            
+            if (!completo) {
+                alert('¡Debes seleccionar un resultado para todos los partidos!');
+                return;
+            }
+            
+            // Mostrar loader
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('guardar-btn').disabled = true;
+            
+            try {
+                await db.collection('pronosticos').add({
+                    userId: currentUser.uid,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    partidos: partidos
+                });
+                
+                // Redirigir a resultados
+                window.location.href = 'resultados.html';
+                
+            } catch (error) {
+                console.error(error);
+                alert('Error al guardar: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('guardar-btn').disabled = false;
+            }
+        });
 
-    nuevaQuinielaBtn.addEventListener('click', () => {
-      if (totalRegistros < 5) {
-        limpiarFormulario();
-      }
-    });
-  </script>
+        // Cerrar sesión
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut();
+        });
+    </script>
 </body>
 </html>
