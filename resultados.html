@@ -319,7 +319,14 @@ function enviarMensaje() {
     } else {
       alert("Debes iniciar sesión para enviar mensajes.");
     }
-  });  <!-- Recuadro de Chat de Feedback -->
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarMensajes();
+});
+  </script>
+  <!-- Recuadro de Chat de Feedback -->
 <div id="chat-feedback" class="chat-cuadro">
   <h3>💬 Chat de Feedback</h3>
   <div id="mensajes-chat" class="mensajes"></div>
@@ -327,15 +334,7 @@ function enviarMensaje() {
     <input type="text" id="mensaje-input" placeholder="Escribe un mensaje..." />
     <button onclick="enviarMensaje()">Enviar</button>
   </div>
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  mostrarMensajes();
-});
-  </script>
-
 </div>
 </body>
 </html>
-
 
