@@ -79,67 +79,67 @@
       text-align: center;
     }
     .chat-cuadro {
-  width: 90%;
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 15px;
-  background-color: #ffffff;
-  border: 2px solid #25d366;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
+      width: 90%;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 15px;
+      background-color: #ffffff;
+      border: 2px solid #25d366;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
 
-.chat-cuadro h3 {
-  color: #25d366;
-  margin-bottom: 10px;
-  text-align: center;
-}
+    .chat-cuadro h3 {
+      color: #25d366;
+      margin-bottom: 10px;
+      text-align: center;
+    }
 
-.mensajes {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-  padding: 5px;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-}
+    .mensajes {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      padding: 5px;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+    }
 
-.mensaje {
-  margin: 6px 0;
-  padding: 8px 12px;
-  background-color: #e1ffc7;
-  border-radius: 10px;
-  font-size: 14px;
-  width: fit-content;
-  max-width: 80%;
-}
+    .mensaje {
+      margin: 6px 0;
+      padding: 8px 12px;
+      background-color: #e1ffc7;
+      border-radius: 10px;
+      font-size: 14px;
+      width: fit-content;
+      max-width: 80%;
+    }
 
-.mensaje.otros {
-  background-color: #f0f0f0;
-  align-self: flex-start;
-}
+    .mensaje.otros {
+      background-color: #f0f0f0;
+      align-self: flex-start;
+    }
 
-.chat-formulario {
-  display: flex;
-  gap: 10px;
-}
+    .chat-formulario {
+      display: flex;
+      gap: 10px;
+    }
 
-.chat-formulario input {
-  flex-grow: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
+    .chat-formulario input {
+      flex-grow: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
 
-.chat-formulario button {
-  background-color: #25d366;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
+    .chat-formulario button {
+      background-color: #25d366;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -190,6 +190,16 @@
       <!-- Contenido dinámico -->
     </tbody>
   </table>
+
+  <!-- Recuadro de Chat de Feedback -->
+  <div id="chat-feedback" class="chat-cuadro">
+    <h3>💬 Chat de Feedback</h3>
+    <div id="mensajes-chat" class="mensajes"></div>
+    <div class="chat-formulario">
+      <input type="text" id="mensaje-input" placeholder="Escribe un mensaje..." />
+      <button onclick="enviarMensaje()">Enviar</button>
+    </div>
+  </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -261,14 +271,19 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
       cargarResultados();
 
       for (let i = 1; i <= 10; i++) {
         document.getElementById(`res-${i}`).addEventListener('input', cargarResultados);
       }
 
-      // Mostrar partidos desde partidos-data.js
       const lista = document.getElementById('lista-partidos');
       if (window.partidosProgramados && lista) {
         lista.innerHTML = '';
@@ -278,63 +293,52 @@
           lista.appendChild(li);
         });
       }
+
+      mostrarMensajes();
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      firebase.auth().signOut().then(() => {
-        window.location.href = 'login.html';
-      });
-    });
     const chatBox = document.getElementById("mensajes-chat");
-const mensajeInput = document.getElementById("mensaje-input");
+    const mensajeInput = document.getElementById("mensaje-input");
 
-function mostrarMensajes() {
-  db.collection("chat").orderBy("timestamp", "asc").onSnapshot(snapshot => {
-    chatBox.innerHTML = "";
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.classList.add("mensaje", "otros");
-      div.textContent = `${data.nombre || "Anónimo"}: ${data.mensaje}`;
-      chatBox.appendChild(div);
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
-}
-
-function enviarMensaje() {
-  const mensaje = mensajeInput.value.trim();
-  if (!mensaje) return;
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      const nombre = user.displayName || user.email || "Usuario";
-      db.collection("chat").add({
-        userId: user.uid,
-        nombre: nombre,
-        mensaje: mensaje,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    function mostrarMensajes() {
+      db.collection("chat").orderBy("timestamp", "asc").onSnapshot(snapshot => {
+        chatBox.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.classList.add("mensaje", "otros");
+          div.textContent = `${data.nombre || "Anónimo"}: ${data.mensaje}`;
+          chatBox.appendChild(div);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, (error) => {
+        console.error("Error al cargar mensajes:", error);
       });
-      mensajeInput.value = "";
-    } else {
-      alert("Debes iniciar sesión para enviar mensajes.");
     }
-  });
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  mostrarMensajes();
-});
+    function enviarMensaje() {
+      const mensaje = mensajeInput.value.trim();
+      if (!mensaje) return;
+
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          const nombre = user.displayName || user.email || "Usuario";
+          db.collection("chat").add({
+            userId: user.uid,
+            nombre: nombre,
+            mensaje: mensaje,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(err => {
+            console.error("Error al enviar mensaje:", err);
+          });
+          mensajeInput.value = "";
+        } else {
+          alert("Debes iniciar sesión para enviar mensajes.");
+        }
+      });
+    }
   </script>
-  <!-- Recuadro de Chat de Feedback -->
-<div id="chat-feedback" class="chat-cuadro">
-  <h3>💬 Chat de Feedback</h3>
-  <div id="mensajes-chat" class="mensajes"></div>
-  <div class="chat-formulario">
-    <input type="text" id="mensaje-input" placeholder="Escribe un mensaje..." />
-    <button onclick="enviarMensaje()">Enviar</button>
-  </div>
-</div>
 </body>
 </html>
+
 
