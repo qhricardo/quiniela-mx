@@ -1,31 +1,50 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Registro - Quiniela MX</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="//cdn.jsdelivr.net/npm/@clappr/player@0.8/dist/clappr.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/@swarmcloud/hls/p2p-engine.min.js"></script>
     <style>
-        .auth-container { max-width: 500px; }
-        .password-hint { 
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: -10px;
-        }
+    body, html {margin: 0;padding: 0;width: 100%;height: 100%;overflow: hidden;}
+    #player {position: absolute;top: 0;left: 0;width: 100%;height: 100%;}
+    /* CSS de la12hd.com/cssm.css incluido directamente */
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar] {
+        height: 5px !important;
+    }
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover .bar-background[data-seekbar] {
+        height: 7px !important;
+    }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <h1>📝 Crear Cuenta</h1>
-        <form id="registerForm">
-            <input type="text" placeholder="Nombre completo" required>
-            <input type="email" placeholder="Correo electrónico" required>
-            <input type="password" placeholder="Contraseña" minlength="8" required>
-            <p class="password-hint">Mínimo 8 caracteres, 1 mayúscula y 1 número</p>
-            <button type="submit" class="btn">Registrarme</button>
-        </form>
-        <p class="auth-footer">¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
-    </div>
-
-    <script src="js/auth.js"></script>
+<div id="player"></div>
+<script>
+    var playbackURL = "https://c2nvdxq.fubohd.com:443/dazntv1/mono.m3u8?token=ab3db33c53c6675e26eec4d2ce2a815477b385ac-9-1750130582-1750112582";
+    var p2pConfig = {
+        live: true,
+        trackerZone: "us",    
+    }
+    P2PEngineHls.tryRegisterServiceWorker(p2pConfig).then(() => {
+        var player = new Clappr.Player({
+            source: playbackURL,
+            parentId: "#player",
+            poster: "",
+            width: "100%",
+            height: "100%",
+            autoPlay: false,
+            plugins: [],
+            mediacontrol: {seekbar: "#D4ED31", buttons: "#FFFFFF"},
+        });
+        p2pConfig.hlsjsInstance = player.core.getCurrentPlayback()?._hls;
+        var engine = new P2PEngineHls(p2pConfig);
+    });
+</script>
 </body>
 </html>
+
+<script id="aclib" type="text/javascript" src="https://ads.tiogol.com/aclib.js"></script>
+
+<script type="text/javascript">
+    aclib.runPop({
+        zoneId: '9169782',
+    });
+</script>
